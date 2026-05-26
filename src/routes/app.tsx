@@ -658,6 +658,7 @@ function LogPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BottomNav />
     </div>
   );
 }
