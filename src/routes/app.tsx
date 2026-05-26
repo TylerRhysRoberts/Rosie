@@ -342,20 +342,19 @@ function LogPage() {
           </Section>
 
           <Section label="Symptoms">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
                 const active = log.symptoms.includes(s);
                 return (
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all active:scale-95 ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-card text-foreground border-border hover:border-primary/40"
                     }`}
                   >
-                    {active && <Check className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />}
                     {s}
                   </button>
                 );
@@ -366,9 +365,9 @@ function LogPage() {
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className="px-3.5 py-2 rounded-full text-sm font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center gap-1"
+                    className="py-2.5 px-2 rounded-xl text-xs font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center justify-center gap-1"
                   >
-                    <Check className="w-3.5 h-3.5" /> {s} <X className="w-3 h-3 ml-0.5 opacity-70" />
+                    {s} <X className="w-3 h-3 opacity-70" />
                   </button>
                 ))}
             </div>
