@@ -44,11 +44,11 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full overflow-hidden">
       <head>
         <HeadContent />
       </head>
-      <body className="bg-background">
+      <body className="h-full overflow-hidden bg-background">
         {children}
         <Scripts />
       </body>
