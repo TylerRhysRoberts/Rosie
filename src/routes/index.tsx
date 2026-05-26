@@ -18,7 +18,8 @@ function SplashPage() {
   useEffect(() => {
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        navigate({ to: session?.user ? "/app" : "/login" });
+        if (session?.user) navigate({ to: "/app", search: {} });
+        else navigate({ to: "/login" });
       });
     });
   }, [navigate]);
