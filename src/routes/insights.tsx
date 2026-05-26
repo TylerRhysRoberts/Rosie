@@ -101,7 +101,7 @@ function InsightsPage() {
   }
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen pb-32">
       <div className="max-w-lg mx-auto px-5 pt-10">
         <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
