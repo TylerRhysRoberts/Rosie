@@ -57,7 +57,7 @@ function HistoryPage() {
   if (!mounted) return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen pb-32">
       <div className="max-w-lg mx-auto px-5 pt-10">
         <div className="flex items-start justify-between animate-fade-up-blur">
           <div>
