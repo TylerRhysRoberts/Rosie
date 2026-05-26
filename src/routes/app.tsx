@@ -1,18 +1,25 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
-  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog,
+  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
 } from "@/lib/daily-logs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/app")({
   component: LogPage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    date: typeof s.date === "string" ? s.date : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Rosie Health Hub — Log Today" },
@@ -21,10 +28,17 @@ export const Route = createFileRoute("/app")({
   }),
 });
 
+const PRIMARY_MEDS = ["Medrone", "Probiotic"] as const;
+const SECONDARY_MEDS = MEDICATION_NAMES.filter(
+  (n) => !(PRIMARY_MEDS as readonly string[]).includes(n),
+);
+const WALK_TARGET_MIN = 45;
+
 function LogPage() {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [date, setDate] = useState(todayKey());
+  const search = Route.useSearch();
+  const [date, setDate] = useState(search.date ?? todayKey());
   const [log, setLog] = useState<DailyLog>(emptyLog());
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,6 +46,13 @@ function LogPage() {
   const [customTreat, setCustomTreat] = useState("");
   const [customScavenged, setCustomScavenged] = useState("");
   const [customMed, setCustomMed] = useState("");
+  const [showMoreMeds, setShowMoreMeds] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (search.date && search.date !== date) setDate(search.date);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.date]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,8 +77,8 @@ function LogPage() {
     setLog((prev) => {
       const has = prev.symptoms.includes(s);
       let symptoms = has ? prev.symptoms.filter((x) => x !== s) : [...prev.symptoms, s];
-      if (!has && s === "None (Normal)") symptoms = ["None (Normal)"];
-      else if (!has) symptoms = symptoms.filter((x) => x !== "None (Normal)");
+      if (!has && s === "No Issues") symptoms = ["No Issues"];
+      else if (!has) symptoms = symptoms.filter((x) => x !== "No Issues");
       return { ...prev, symptoms };
     });
   };
@@ -69,7 +90,7 @@ function LogPage() {
       ...prev,
       symptoms: prev.symptoms.includes(v)
         ? prev.symptoms
-        : [...prev.symptoms.filter((x) => x !== "None (Normal)"), v],
+        : [...prev.symptoms.filter((x) => x !== "No Issues"), v],
     }));
     setCustomSymptom("");
   };
@@ -125,7 +146,7 @@ function LogPage() {
 
   const addWalk = () => {
     if (log.walks.length >= 3) return;
-    update("walks", [...log.walks, { hours: 0, minutes: 30, completed: false }]);
+    update("walks", [...log.walks, { hours: 0, minutes: 30 }]);
   };
   const setWalk = (i: number, partial: Partial<Walk>) => {
     const next = log.walks.slice();
@@ -155,17 +176,37 @@ function LogPage() {
     }
   };
 
-  const handleSave = async () => {
+  const persist = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      const saved = await upsertLog(user.id, log);
+      // Auto-derive walk completion from inputs
+      const walks = log.walks.map((w) => ({
+        ...w,
+        completed: (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0) > 0,
+      }));
+      const saved = await upsertLog(user.id, { ...log, walks });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
     } catch (err: any) {
       toast.error("Save failed", { description: err.message });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const missingSections = () => {
+    const missing: string[] = [];
+    if (totalWalkMinutes(log.walks) === 0) missing.push("No walks logged");
+    if (!log.notes.trim()) missing.push("No notes added");
+    return missing;
+  };
+
+  const handleSave = () => {
+    if (missingSections().length > 0) {
+      setConfirmOpen(true);
+    } else {
+      persist();
     }
   };
 
@@ -178,6 +219,8 @@ function LogPage() {
   const customMedNames = Object.keys(log.medications).filter(
     (n) => !(MEDICATION_NAMES as readonly string[]).includes(n),
   );
+  const totalWalkMins = totalWalkMinutes(log.walks);
+  const targetHit = totalWalkMins >= WALK_TARGET_MIN;
 
   return (
     <div
