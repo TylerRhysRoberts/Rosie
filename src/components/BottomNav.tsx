@@ -20,6 +20,7 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
+              search={to === "/app" ? {} : undefined as any}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-medium transition-colors duration-200 active:scale-95 ${
                 isActive
                   ? "bg-primary/10 text-primary"
