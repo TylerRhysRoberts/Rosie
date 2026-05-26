@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Infinity as InfinityIcon, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import shadowBg from "@/assets/shadow-bg.jpg";
+import rosieIcon from "@/assets/rosie-icon.png";
 
 async function getSupabase() {
   const { supabase } = await import("@/integrations/supabase/client");
@@ -72,25 +72,21 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 relative bg-white">
-      {/* Shadow background */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `url(${shadowBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', opacity: 0.75 }} />
-
+    <div className="min-h-screen flex items-center justify-center px-5 relative bg-background">
       <div className="max-w-sm w-full animate-fade-up-blur relative z-10">
         {/* Logo — links home */}
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8 hover:opacity-80 transition-opacity">
-          <InfinityIcon className="w-7 h-7 text-foreground" strokeWidth={2.5} />
-          <span className="text-xl font-semibold text-foreground tracking-tight">Continuum</span>
+        <Link to="/" className="flex items-center justify-center mb-6 hover:opacity-80 transition-opacity">
+          <img src={rosieIcon} alt="Rosie Health Hub" className="w-24 h-24 object-contain" />
         </Link>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-black/[0.06] border border-border/50 p-8">
+        <div className="bg-card rounded-2xl shadow-xl shadow-primary/[0.08] border border-secondary/40 p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-foreground tracking-tight" style={{ lineHeight: "1.2" }}>
-              {isSignUp ? "Create your account" : "Welcome back"}
+              {isSignUp ? "Create your account" : "Rosie Health Hub"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1.5">
-              {isSignUp ? "Start building lasting habits" : "Continue your daily ritual"}
+              {isSignUp ? "Start tracking Rosie's wellness" : "Track and manage Rosie's wellness profile"}
             </p>
           </div>
 
@@ -152,7 +148,7 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-[#FDAA3E] text-[#1a1a1a] py-3.5 text-sm font-bold hover:bg-[#fdb95e] transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-[#FDAA3E]/20"
+            className="w-full rounded-xl bg-primary text-primary-foreground py-3.5 text-sm font-bold hover:bg-primary/90 transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-primary/20"
           >
             {loading ? "Please wait..." : isSignUp ? "Sign up" : "Sign in"}
           </button>

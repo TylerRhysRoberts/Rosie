@@ -1,0 +1,13 @@
+{
+  "name": "Rosie Health Hub",
+  "short_name": "Rosie",
+  "description": "A private daily health log for Rosie.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#F48FB1",
+  "icons": [
+    { "src": "/rosie-icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/rosie-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
