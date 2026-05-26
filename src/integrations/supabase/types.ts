@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_logs: {
+        Row: {
+          created_at: string
+          health_score: number
+          id: string
+          location: string | null
+          log_date: string
+          medications: Json
+          notes: string
+          routine_type: string | null
+          symptoms: string[]
+          updated_at: string
+          user_id: string
+          walks: Json
+        }
+        Insert: {
+          created_at?: string
+          health_score: number
+          id?: string
+          location?: string | null
+          log_date: string
+          medications?: Json
+          notes?: string
+          routine_type?: string | null
+          symptoms?: string[]
+          updated_at?: string
+          user_id: string
+          walks?: Json
+        }
+        Update: {
+          created_at?: string
+          health_score?: number
+          id?: string
+          location?: string | null
+          log_date?: string
+          medications?: Json
+          notes?: string
+          routine_type?: string | null
+          symptoms?: string[]
+          updated_at?: string
+          user_id?: string
+          walks?: Json
+        }
+        Relationships: []
+      }
       habit_logs: {
         Row: {
           created_at: string
