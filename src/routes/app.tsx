@@ -439,7 +439,7 @@ function LogPage() {
           {/* 5. Care & activities */}
           <Section label="Medications">
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
-              {MEDICATION_NAMES.map((name) => {
+              {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
                   <div key={name} className="flex items-center gap-3 px-4 py-3">
@@ -458,6 +458,33 @@ function LogPage() {
                   </div>
                 );
               })}
+              {showMoreMeds && SECONDARY_MEDS.map((name) => {
+                const med = log.medications[name];
+                return (
+                  <div key={name} className="flex items-center gap-3 px-4 py-3">
+                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+                    <select
+                      value={med.dosage}
+                      onChange={(e) => setMed(name, { dosage: e.target.value })}
+                      disabled={!med.taken}
+                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
+                    >
+                      {DOSAGE_OPTIONS.map((d) => (
+                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
+                      ))}
+                    </select>
+                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setShowMoreMeds((v) => !v)}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showMoreMeds ? "rotate-180" : ""}`} />
+                {showMoreMeds ? "Hide extra medications" : "Show more medications"}
+              </button>
               {customMedNames.map((name) => {
                 const med = log.medications[name];
                 return (
