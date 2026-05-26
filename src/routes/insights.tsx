@@ -58,6 +58,8 @@ function InsightsPage() {
   const totalEntries = ranged.length;
   const totalWalkMins = ranged.reduce((s, l) => s + totalWalkMinutes(l.walks), 0);
   const avgDailyWalk = totalEntries > 0 ? Math.round(totalWalkMins / totalEntries) : 0;
+  const WALK_TARGET = 45;
+  const targetDays = ranged.filter((l) => totalWalkMinutes(l.walks) >= WALK_TARGET).length;
 
   const flareUps = ranged.filter((l) => l.flare_up).length;
   // Current flare-free streak (within range): consecutive most-recent days without flare-up
@@ -140,6 +142,7 @@ function InsightsPage() {
                 icon={Footprints}
                 label="Avg Daily Walk"
                 value={`${avgDailyWalk} min`}
+                sub={`Target hit: ${targetDays}/${totalEntries} day${totalEntries === 1 ? "" : "s"}`}
               />
             </div>
 
@@ -292,12 +295,13 @@ function InsightsPage() {
   );
 }
 
-function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function MiniStat({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-2xl bg-card border border-border p-4">
       <Icon className="w-4 h-4 text-primary mb-2" />
       <p className="font-mono text-xl font-semibold text-foreground tabular-nums leading-none">{value}</p>
       <p className="text-[11px] text-muted-foreground mt-1">{label}</p>
+      {sub && <p className="text-[10px] text-muted-foreground/80 mt-1 tabular-nums">{sub}</p>}
     </div>
   );
 }
