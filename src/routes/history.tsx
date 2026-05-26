@@ -258,7 +258,11 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
             </p>
             <p className="text-[12px] text-muted-foreground truncate">
               {meta.label}
-              {log.symptoms.length > 0 && ` · ${log.symptoms.length} symptom${log.symptoms.length === 1 ? "" : "s"}`}
+              {(() => {
+                const realSymptoms = log.symptoms.filter((s) => s !== "No Issues");
+                if (realSymptoms.length === 0) return " · No Symptoms";
+                return ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`;
+              })()}
               {walks > 0 && ` · ${walks}m walking`}
               {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
             </p>
