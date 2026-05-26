@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { BottomNav } from "@/components/BottomNav";
 import { DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv } from "@/lib/daily-logs";
 import { ChevronRight, CalendarDays, Search, AlertTriangle, Download } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
@@ -54,11 +53,11 @@ function HistoryPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (!mounted) return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
+  if (!mounted) return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading…</div>;
 
   return (
-    <div className="min-h-screen pb-32">
-      <div className="max-w-lg mx-auto px-5 pt-10">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-24">
         <div className="flex items-start justify-between animate-fade-up-blur">
           <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Past entries</p>
@@ -148,7 +147,6 @@ function HistoryPage() {
           </ul>
         )}
       </div>
-      <BottomNav />
     </div>
   );
 }
