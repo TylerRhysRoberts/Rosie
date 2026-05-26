@@ -1,4 +1,5 @@
-import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { BottomNav } from "@/components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -47,7 +48,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="pb-[env(safe-area-inset-bottom)]">
+      <body className="bg-background">
         {children}
         <Scripts />
       </body>
@@ -56,11 +57,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const { pathname } = useLocation();
+  const isAppShellRoute = pathname === "/app" || pathname === "/history" || pathname === "/insights";
+
   return (
     <>
-      <div className="animate-page-enter">
-        <Outlet />
-      </div>
+      {isAppShellRoute ? (
+        <div className="h-[100dvh] overflow-hidden bg-background">
+          <div className="mx-auto flex h-full w-full max-w-lg flex-col">
+            <main className="min-h-0 flex-1 animate-page-enter">
+              <Outlet />
+            </main>
+            <BottomNav />
+          </div>
+        </div>
+      ) : (
+        <div className="animate-page-enter">
+          <Outlet />
+        </div>
+      )}
       <Toaster position="top-center" />
     </>
   );
