@@ -137,7 +137,7 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
   };
   const { data, error } = await supabase
     .from("daily_logs")
-    .upsert(payload, { onConflict: "user_id,log_date" })
+    .upsert([payload], { onConflict: "user_id,log_date" })
     .select()
     .single();
   if (error) throw error;
