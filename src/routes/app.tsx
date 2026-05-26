@@ -198,6 +198,10 @@ function LogPage() {
     const missing: string[] = [];
     if (totalWalkMinutes(log.walks) === 0) missing.push("No walks logged");
     if (!log.notes.trim()) missing.push("No notes added");
+    if (!log.routine_type) missing.push("No routine type selected");
+    if (!Object.values(log.medications).some((m) => m.taken))
+      missing.push("No medications logged");
+    if (!log.location) missing.push("No location selected");
     return missing;
   };
 
