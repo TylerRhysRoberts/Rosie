@@ -12,8 +12,8 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]">
-      <div className="max-w-lg mx-auto px-3 pb-3">
+    <div className="fixed bottom-0 left-0 right-0 z-50 w-full pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-lg px-3 pb-3">
         <nav className="flex items-stretch rounded-2xl border border-border bg-card/95 backdrop-blur-xl p-1.5 shadow-[0_-4px_20px_-6px_rgba(0,0,0,0.08)]">
           {navItems.map(({ to, icon: Icon, label }) => {
             const isActive = path === to;

@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { BottomNav } from "@/components/BottomNav";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
@@ -171,7 +170,7 @@ function LogPage() {
   };
 
   if (authLoading || !mounted) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
+    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading…</div>;
   }
 
   const isSubmitted = !!log.id;
@@ -182,11 +181,11 @@ function LogPage() {
 
   return (
     <div
-      className={`min-h-screen pb-32 transition-colors ${
+      className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden transition-colors ${
         flareAccent ? "bg-[oklch(0.97_0.04_25)]" : ""
       }`}
     >
-      <div className="max-w-lg mx-auto px-5 pt-10">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-24">
         <div className="flex items-start justify-between animate-fade-up-blur">
           <div className="flex items-center gap-3">
             <div>
@@ -545,8 +544,6 @@ function LogPage() {
           </button>
         </div>
       </div>
-
-      <BottomNav />
     </div>
   );
 }
