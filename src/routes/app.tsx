@@ -1,13 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
-  emptyLog, todayKey, fetchLogByDate, upsertLog,
+  STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
+  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog,
 } from "@/lib/daily-logs";
 
 export const Route = createFileRoute("/app")({
@@ -27,6 +28,10 @@ function LogPage() {
   const [log, setLog] = useState<DailyLog>(emptyLog());
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [customSymptom, setCustomSymptom] = useState("");
+  const [customTreat, setCustomTreat] = useState("");
+  const [customScavenged, setCustomScavenged] = useState("");
+  const [customMed, setCustomMed] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -51,11 +56,41 @@ function LogPage() {
     setLog((prev) => {
       const has = prev.symptoms.includes(s);
       let symptoms = has ? prev.symptoms.filter((x) => x !== s) : [...prev.symptoms, s];
-      // "None" is exclusive
       if (!has && s === "None (Normal)") symptoms = ["None (Normal)"];
       else if (!has) symptoms = symptoms.filter((x) => x !== "None (Normal)");
       return { ...prev, symptoms };
     });
+  };
+
+  const addCustomSymptom = () => {
+    const v = customSymptom.trim();
+    if (!v) return;
+    setLog((prev) => ({
+      ...prev,
+      symptoms: prev.symptoms.includes(v)
+        ? prev.symptoms
+        : [...prev.symptoms.filter((x) => x !== "None (Normal)"), v],
+    }));
+    setCustomSymptom("");
+  };
+
+  const toggleListItem = (key: "treats" | "scavenged", item: string) => {
+    setLog((prev) => {
+      const arr = prev[key];
+      return {
+        ...prev,
+        [key]: arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item],
+      };
+    });
+  };
+
+  const addCustomTo = (key: "treats" | "scavenged", value: string, reset: () => void) => {
+    const v = value.trim();
+    if (!v) return;
+    setLog((prev) =>
+      prev[key].includes(v) ? prev : { ...prev, [key]: [...prev[key], v] },
+    );
+    reset();
   };
 
   const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string }>) => {
@@ -68,9 +103,29 @@ function LogPage() {
     }));
   };
 
+  const addCustomMed = () => {
+    const v = customMed.trim();
+    if (!v) return;
+    setLog((prev) =>
+      prev.medications[v]
+        ? prev
+        : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole" } } },
+    );
+    setCustomMed("");
+  };
+
+  const removeMed = (name: string) => {
+    if ((MEDICATION_NAMES as readonly string[]).includes(name)) return;
+    setLog((prev) => {
+      const next = { ...prev.medications };
+      delete next[name];
+      return { ...prev, medications: next };
+    });
+  };
+
   const addWalk = () => {
     if (log.walks.length >= 3) return;
-    update("walks", [...log.walks, { hours: 0, minutes: 30 }]);
+    update("walks", [...log.walks, { hours: 0, minutes: 30, completed: false }]);
   };
   const setWalk = (i: number, partial: Partial<Walk>) => {
     const next = log.walks.slice();
@@ -78,6 +133,27 @@ function LogPage() {
     update("walks", next);
   };
   const removeWalk = (i: number) => update("walks", log.walks.filter((_, j) => j !== i));
+
+  const handleCopyYesterday = async () => {
+    if (!user) return;
+    try {
+      const prev = await fetchPreviousLog(user.id, date);
+      if (!prev) {
+        toast.info("No previous log found");
+        return;
+      }
+      setLog({
+        ...prev,
+        id: log.id,
+        log_date: date,
+      });
+      toast.success("Pre-filled from previous entry", {
+        description: `Copied from ${prev.log_date}`,
+      });
+    } catch (err: any) {
+      toast.error("Couldn't copy", { description: err.message });
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -97,8 +173,18 @@ function LogPage() {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
   }
 
+  const isSubmitted = !!log.id;
+  const flareAccent = log.flare_up;
+  const customMedNames = Object.keys(log.medications).filter(
+    (n) => !(MEDICATION_NAMES as readonly string[]).includes(n),
+  );
+
   return (
-    <div className="min-h-screen pb-32">
+    <div
+      className={`min-h-screen pb-32 transition-colors ${
+        flareAccent ? "bg-[oklch(0.97_0.04_25)]" : ""
+      }`}
+    >
       <div className="max-w-lg mx-auto px-5 pt-10">
         <div className="flex items-start justify-between animate-fade-up-blur">
           <div>
@@ -114,8 +200,18 @@ function LogPage() {
           </button>
         </div>
 
+        {/* Submission signifier */}
+        {isSubmitted && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl px-3.5 py-2.5 bg-[oklch(0.93_0.07_145)] border border-[oklch(0.72_0.16_145)] animate-fade-up-blur">
+            <CheckCircle2 className="w-4 h-4 text-[oklch(0.55_0.18_145)]" />
+            <span className="text-sm font-medium text-[oklch(0.4_0.12_145)]">
+              Log submitted for this date
+            </span>
+          </div>
+        )}
+
         <div className="mt-6 space-y-5">
-          {/* Date selector */}
+          {/* 1. Header & system controls */}
           <Section label="Date">
             <input
               type="date"
@@ -124,12 +220,39 @@ function LogPage() {
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
+            <button
+              onClick={handleCopyYesterday}
+              className="mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:border-primary/40 active:scale-[0.99] transition-all"
+            >
+              <Copy className="w-4 h-4" /> Copy Yesterday's Inputs
+            </button>
           </Section>
 
-          {/* Overall score */}
+          {/* 2. Severity & alert flags */}
+          <Section label="Flare-Up Alert">
+            <button
+              onClick={() => update("flare_up", !log.flare_up)}
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
+                log.flare_up
+                  ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
+                  : "bg-card border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle
+                  className={`w-5 h-5 ${log.flare_up ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}
+                />
+                <span className={`text-sm font-semibold ${log.flare_up ? "text-[oklch(0.45_0.18_25)]" : "text-foreground"}`}>
+                  {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
+                </span>
+              </div>
+              <Toggle on={log.flare_up} onChange={(v) => update("flare_up", v)} />
+            </button>
+          </Section>
+
           <Section label="Overall Health Score">
             <div className="grid grid-cols-3 gap-3">
-              {([3, 2, 1] as HealthScore[]).map((s) => {
+              {([1, 2, 3] as HealthScore[]).map((s) => {
                 const meta = SCORE_META[s];
                 const active = log.health_score === s;
                 return (
@@ -151,7 +274,28 @@ function LogPage() {
             </div>
           </Section>
 
-          {/* Symptoms */}
+          {/* 3. Clinical observations */}
+          <Section label="Stool Consistency">
+            <div className="grid grid-cols-3 gap-2">
+              {STOOL_OPTIONS.map((opt) => {
+                const active = log.stool_consistency === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => update("stool_consistency", active ? null : (opt.value as StoolConsistency))}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all active:scale-95 ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card text-foreground border-border hover:border-primary/40"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
           <Section label="Symptoms">
             <div className="flex flex-wrap gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
@@ -171,10 +315,84 @@ function LogPage() {
                   </button>
                 );
               })}
+              {log.symptoms
+                .filter((s) => !(SYMPTOM_OPTIONS as readonly string[]).includes(s))
+                .map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => toggleSymptom(s)}
+                    className="px-3.5 py-2 rounded-full text-sm font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center gap-1"
+                  >
+                    <Check className="w-3.5 h-3.5" /> {s} <X className="w-3 h-3 ml-0.5 opacity-70" />
+                  </button>
+                ))}
             </div>
+            <CustomAdd
+              value={customSymptom}
+              onChange={setCustomSymptom}
+              onAdd={addCustomSymptom}
+              placeholder="Add custom symptom…"
+            />
           </Section>
 
-          {/* Medications */}
+          {/* 4. Dietary inputs */}
+          <Section label="% of Dins" hint={`${log.dins_percent}%`}>
+            <DinsSlider value={log.dins_percent} onChange={(v) => update("dins_percent", v)} />
+          </Section>
+
+          <Section label="Treats">
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_TREATS.map((t) => {
+                const active = log.treats.includes(t);
+                return (
+                  <Chip key={t} active={active} onClick={() => toggleListItem("treats", t)}>
+                    {t}
+                  </Chip>
+                );
+              })}
+              {log.treats
+                .filter((t) => !(DEFAULT_TREATS as readonly string[]).includes(t))
+                .map((t) => (
+                  <Chip key={t} active onClick={() => toggleListItem("treats", t)}>
+                    {t}
+                  </Chip>
+                ))}
+            </div>
+            <CustomAdd
+              value={customTreat}
+              onChange={setCustomTreat}
+              onAdd={() => addCustomTo("treats", customTreat, () => setCustomTreat(""))}
+              placeholder="Add custom treat…"
+            />
+          </Section>
+
+          <Section label="Scavenged / Additional Food">
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_SCAVENGED.map((t) => {
+                const active = log.scavenged.includes(t);
+                return (
+                  <Chip key={t} active={active} onClick={() => toggleListItem("scavenged", t)}>
+                    {t}
+                  </Chip>
+                );
+              })}
+              {log.scavenged
+                .filter((t) => !(DEFAULT_SCAVENGED as readonly string[]).includes(t))
+                .map((t) => (
+                  <Chip key={t} active onClick={() => toggleListItem("scavenged", t)}>
+                    {t}
+                  </Chip>
+                ))}
+            </div>
+            <CustomAdd
+              value={customScavenged}
+              onChange={setCustomScavenged}
+              onAdd={() => addCustomTo("scavenged", customScavenged, () => setCustomScavenged(""))}
+              placeholder="Add custom item…"
+            />
+          </Section>
+
+          {/* 5. Care & activities */}
           <Section label="Medications">
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
               {MEDICATION_NAMES.map((name) => {
@@ -196,10 +414,41 @@ function LogPage() {
                   </div>
                 );
               })}
+              {customMedNames.map((name) => {
+                const med = log.medications[name];
+                return (
+                  <div key={name} className="flex items-center gap-3 px-4 py-3">
+                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+                    <select
+                      value={med.dosage}
+                      onChange={(e) => setMed(name, { dosage: e.target.value })}
+                      disabled={!med.taken}
+                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
+                    >
+                      {DOSAGE_OPTIONS.map((d) => (
+                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
+                      ))}
+                    </select>
+                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
+                    <button
+                      onClick={() => removeMed(name)}
+                      className="text-muted-foreground hover:text-destructive p-1 rounded active:scale-90"
+                      aria-label={`Remove ${name}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
+            <CustomAdd
+              value={customMed}
+              onChange={setCustomMed}
+              onAdd={addCustomMed}
+              placeholder="Add custom medication…"
+            />
           </Section>
 
-          {/* Location */}
           <Section label="Location">
             <select
               value={log.location ?? ""}
@@ -213,7 +462,6 @@ function LogPage() {
             </select>
           </Section>
 
-          {/* Routine type */}
           <Section label="Routine Type">
             <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
               {(["routine", "non_routine"] as const).map((r) => {
@@ -233,11 +481,28 @@ function LogPage() {
             </div>
           </Section>
 
-          {/* Walks */}
           <Section label="Walks" hint={`${log.walks.length}/3`}>
             <div className="space-y-2">
               {log.walks.map((w, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 rounded-xl border p-3 transition-colors ${
+                    w.completed
+                      ? "bg-[oklch(0.95_0.06_145)] border-[oklch(0.72_0.16_145)]"
+                      : "bg-card border-border"
+                  }`}
+                >
+                  <button
+                    onClick={() => setWalk(i, { completed: !w.completed })}
+                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all active:scale-90 ${
+                      w.completed
+                        ? "bg-[oklch(0.65_0.18_145)] border-[oklch(0.65_0.18_145)] text-white"
+                        : "border-border bg-card"
+                    }`}
+                    aria-label={`Mark walk ${i + 1} completed`}
+                  >
+                    {w.completed && <Check className="w-4 h-4" />}
+                  </button>
                   <span className="text-xs font-semibold text-muted-foreground w-12">Walk {i + 1}</span>
                   <NumInput value={w.hours} onChange={(v) => setWalk(i, { hours: v })} max={12} suffix="h" />
                   <NumInput value={w.minutes} onChange={(v) => setWalk(i, { minutes: v })} max={59} suffix="m" />
@@ -257,7 +522,6 @@ function LogPage() {
             </div>
           </Section>
 
-          {/* Notes */}
           <Section label="Notes">
             <textarea
               value={log.notes}
@@ -295,19 +559,111 @@ function Section({ label, hint, children }: { label: string; hint?: string; chil
   );
 }
 
-function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
+      onClick={onClick}
+      className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-card text-foreground border-border hover:border-primary/40"
+      }`}
+    >
+      {active && <Check className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />}
+      {children}
+    </button>
+  );
+}
+
+function CustomAdd({
+  value, onChange, onAdd, placeholder,
+}: { value: string; onChange: (v: string) => void; onAdd: () => void; placeholder: string }) {
+  return (
+    <div className="mt-2 flex gap-2">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAdd(); } }}
+        placeholder={placeholder}
+        className="flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      />
+      <button
+        onClick={onAdd}
+        className="px-3 rounded-xl bg-muted text-foreground text-sm font-medium hover:bg-muted/70 active:scale-95"
+        aria-label="Add"
+      >
+        <Plus className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+function DinsSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const over = value > 100;
+  const pct = Math.min(150, Math.max(0, value));
+  const fillPercent = (pct / 150) * 100;
+  const normalFill = Math.min(100, pct);
+  const normalPct = (normalFill / 150) * 100;
+  return (
+    <div className="rounded-xl bg-card border border-border p-4">
+      <div className="flex items-baseline justify-between mb-2">
+        <span className={`text-2xl font-semibold tabular-nums ${over ? "text-[oklch(0.62_0.17_55)]" : "text-foreground"}`}>
+          {pct}%
+        </span>
+        {over && (
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.62_0.17_55)]">
+            Overfeed
+          </span>
+        )}
+      </div>
+      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 bg-primary"
+          style={{ width: `${normalPct}%` }}
+        />
+        {over && (
+          <div
+            className="absolute inset-y-0 bg-[oklch(0.7_0.18_55)]"
+            style={{ left: `${normalPct}%`, width: `${fillPercent - normalPct}%` }}
+          />
+        )}
+        <div
+          className="absolute inset-y-0 w-px bg-foreground/30"
+          style={{ left: "66.66%" }}
+          aria-hidden
+        />
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={150}
+        step={5}
+        value={pct}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full mt-3 accent-primary"
+      />
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-0.5">
+        <span>0%</span><span>50%</span><span>100%</span><span>150%</span>
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <span
       onClick={() => onChange(!on)}
+      role="switch"
+      aria-checked={on}
       className={`relative w-11 h-6 rounded-full transition-colors ${on ? "bg-primary" : "bg-muted-foreground/25"}`}
-      aria-pressed={on}
     >
       <span
         className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
           on ? "translate-x-5" : "translate-x-0"
         }`}
       />
-    </button>
+    </span>
   );
 }
 

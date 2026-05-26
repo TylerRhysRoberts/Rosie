@@ -17,6 +17,8 @@ export type Database = {
       daily_logs: {
         Row: {
           created_at: string
+          dins_percent: number
+          flare_up: boolean
           health_score: number
           id: string
           location: string | null
@@ -24,13 +26,18 @@ export type Database = {
           medications: Json
           notes: string
           routine_type: string | null
+          scavenged: Json
+          stool_consistency: string | null
           symptoms: string[]
+          treats: Json
           updated_at: string
           user_id: string
           walks: Json
         }
         Insert: {
           created_at?: string
+          dins_percent?: number
+          flare_up?: boolean
           health_score: number
           id?: string
           location?: string | null
@@ -38,13 +45,18 @@ export type Database = {
           medications?: Json
           notes?: string
           routine_type?: string | null
+          scavenged?: Json
+          stool_consistency?: string | null
           symptoms?: string[]
+          treats?: Json
           updated_at?: string
           user_id: string
           walks?: Json
         }
         Update: {
           created_at?: string
+          dins_percent?: number
+          flare_up?: boolean
           health_score?: number
           id?: string
           location?: string | null
@@ -52,7 +64,10 @@ export type Database = {
           medications?: Json
           notes?: string
           routine_type?: string | null
+          scavenged?: Json
+          stool_consistency?: string | null
           symptoms?: string[]
+          treats?: Json
           updated_at?: string
           user_id?: string
           walks?: Json
