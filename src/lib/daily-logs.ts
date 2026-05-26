@@ -208,6 +208,15 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
   return rowToLog(data);
 }
 
+export async function deleteLogByDate(userId: string, date: string): Promise<void> {
+  const { error } = await supabase
+    .from("daily_logs")
+    .delete()
+    .eq("user_id", userId)
+    .eq("log_date", date);
+  if (error) throw error;
+}
+
 function rowToLog(r: any): DailyLog {
   return {
     id: r.id,
