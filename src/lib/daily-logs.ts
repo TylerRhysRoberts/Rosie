@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type HealthScore = 1 | 2 | 3;
-export type DosageSize = "whole" | "half" | "quarter" | "eighth";
+export type DosageSize = "whole" | "half" | "third" | "quarter" | "eighth";
 export type RoutineType = "routine" | "non_routine";
 export type StoolConsistency =
   | "formed"
@@ -54,10 +54,11 @@ export const LOCATION_OPTIONS = [
 export const DEFAULT_TREATS = ["Cheese", "Crompch", "Yak Chews"] as const;
 export const DEFAULT_SCAVENGED = ["Twigs", "Floor Food", "Plants"] as const;
 
-export const DOSAGE_OPTIONS: DosageSize[] = ["whole", "half", "quarter", "eighth"];
+export const DOSAGE_OPTIONS: DosageSize[] = ["whole", "half", "third", "quarter", "eighth"];
 export const DOSAGE_LABELS: Record<DosageSize, string> = {
   whole: "Whole",
   half: "Half",
+  third: "Third",
   quarter: "Quarter",
   eighth: "Eighth",
 };
@@ -100,11 +101,24 @@ export function todayKey(): string {
 
 export function emptyMedications(): Record<string, Medication> {
   const out: Record<string, Medication> = {};
-  for (const name of MEDICATION_NAMES) out[name] = { taken: false, dosage: "whole" };
+  const defaults: Record<string, DosageSize> = {
+    Medrone: "half",
+    Probiotic: "whole",
+    Sulfasalazine: "quarter",
+    Famotidine: "third",
+    Buscopan: "whole",
+    "Flea Meds": "whole",
+    "Worming Meds": "whole",
+  };
+  for (const name of MEDICATION_NAMES)
+    out[name] = { taken: false, dosage: defaults[name] ?? "whole" };
   return out;
 }
 
 export function emptyLog(date = todayKey()): DailyLog {
+  const [y, m, d] = date.split("-").map(Number);
+  const dow = new Date(y, m - 1, d).getDay(); // 0 Sun … 6 Sat
+  const isWeekend = dow === 0 || dow === 6;
   return {
     log_date: date,
     health_score: 3,
@@ -112,10 +126,10 @@ export function emptyLog(date = todayKey()): DailyLog {
     stool_consistency: "formed",
     symptoms: ["No Issues"],
     medications: emptyMedications(),
-    location: null,
-    routine_type: null,
+    location: "Home",
+    routine_type: isWeekend ? "non_routine" : "routine",
     dins_percent: 100,
-    treats: [],
+    treats: ["Cheese"],
     scavenged: [],
     walks: [],
     notes: "",
