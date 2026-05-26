@@ -19,6 +19,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 export const Route = createFileRoute("/insights")({
@@ -100,6 +101,21 @@ function InsightsPage() {
       score: match ? match.health_score : null,
     });
   }
+
+  // Build chronological walk-duration data (one point per day in range)
+  const walkTrend: { date: string; label: string; minutes: number | null }[] = [];
+  for (let i = rangeDays - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split("T")[0];
+    const match = ranged.find((l) => l.log_date === key);
+    walkTrend.push({
+      date: key,
+      label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+      minutes: match ? totalWalkMinutes(match.walks) : null,
+    });
+  }
+  const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -279,6 +295,60 @@ function InsightsPage() {
                     <Line
                       type="monotone"
                       dataKey="score"
+                      stroke="oklch(0.72 0.16 0)"
+                      strokeWidth={2.5}
+                      dot={{ r: 3, fill: "oklch(0.72 0.16 0)" }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Daily total walk duration */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Daily Total Walk Duration
+              </h2>
+              <div className="h-48 -ml-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={walkTrend} margin={{ top: 5, right: 8, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      interval="preserveStartEnd"
+                      minTickGap={20}
+                    />
+                    <YAxis
+                      domain={[0, Math.max(60, Math.ceil(maxWalk / 15) * 15)]}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={28}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      formatter={(v: any) =>
+                        v === null ? ["No log", "Walks"] : [`${v} min`, "Total walks"]
+                      }
+                    />
+                    <ReferenceLine
+                      y={45}
+                      stroke="oklch(0.55 0.02 80)"
+                      strokeDasharray="4 4"
+                      label={{
+                        value: "Daily Target (45m)",
+                        position: "insideTopRight",
+                        fontSize: 10,
+                        fill: "oklch(0.45 0.02 80)",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="minutes"
                       stroke="oklch(0.72 0.16 0)"
                       strokeWidth={2.5}
                       dot={{ r: 3, fill: "oklch(0.72 0.16 0)" }}
