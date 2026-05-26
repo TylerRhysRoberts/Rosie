@@ -117,6 +117,7 @@ function HistoryPage() {
                 <li key={l.log_date}>
                   <Link
                     to="/app"
+                    search={{ date: l.log_date }}
                     className="flex items-center gap-3 rounded-2xl bg-card border border-border px-4 py-3.5 hover:border-primary/30 transition-colors active:scale-[0.99]"
                   >
                     <span
