@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv } from "@/lib/daily-logs";
 import { ChevronRight, CalendarDays, Search, AlertTriangle, Download } from "lucide-react";
+import rosieLogo from "@/assets/rosie-icon.png";
 
 export const Route = createFileRoute("/history")({
   component: HistoryPage,
@@ -63,13 +64,16 @@ function HistoryPage() {
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Past entries</p>
             <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">History</h1>
           </div>
-          <button
+          <div className="flex items-center gap-3">
+            <button
             onClick={handleExport}
             disabled={logs.length === 0}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 disabled:opacity-50 active:scale-95"
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
-          </button>
+            </button>
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </div>
         </div>
 
         {/* Search + filters */}

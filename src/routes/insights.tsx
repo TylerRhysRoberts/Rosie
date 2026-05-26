@@ -11,6 +11,7 @@ import {
   HealthScore,
 } from "@/lib/daily-logs";
 import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck } from "lucide-react";
+import rosieLogo from "@/assets/rosie-icon.png";
 import {
   LineChart,
   Line,
@@ -102,11 +103,14 @@ function InsightsPage() {
   return (
     <div className="min-h-screen pb-28">
       <div className="max-w-lg mx-auto px-5 pt-10">
-        <div className="animate-fade-up-blur">
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Trends
-          </p>
-          <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Insights</h1>
+        <div className="flex items-center justify-between animate-fade-up-blur">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+              Trends
+            </p>
+            <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Insights</h1>
+          </div>
+          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
         </div>
 
         {/* Global time-range toggle */}

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
+import rosieLogo from "@/assets/rosie-icon.png";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
@@ -187,9 +188,12 @@ function LogPage() {
     >
       <div className="max-w-lg mx-auto px-5 pt-10">
         <div className="flex items-start justify-between animate-fade-up-blur">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
-            <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Daily Log</h1>
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
+              <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Daily Log</h1>
+            </div>
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
           </div>
           <button
             onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
