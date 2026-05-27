@@ -555,39 +555,13 @@ function LogPage() {
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                  </div>
+                  <MedRow key={name} name={name} med={med} setMed={setMed} />
                 );
               })}
               {showMoreMeds && SECONDARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                  </div>
+                  <MedRow key={name} name={name} med={med} setMed={setMed} />
                 );
               })}
               <button
@@ -601,27 +575,13 @@ function LogPage() {
               {customMedNames.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                    <button
-                      onClick={() => removeMed(name)}
-                      className="text-muted-foreground hover:text-destructive p-1 rounded active:scale-90"
-                      aria-label={`Remove ${name}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <MedRow
+                    key={name}
+                    name={name}
+                    med={med}
+                    setMed={setMed}
+                    onRemove={() => removeMed(name)}
+                  />
                 );
               })}
             </div>
