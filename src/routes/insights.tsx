@@ -420,3 +420,46 @@ function EmptyState() {
     </div>
   );
 }
+
+function WalkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const hs = p.healthScore;
+  const flare = p.flare;
+  const rescueMeds: string[] = p.rescueMeds ?? [];
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.6 0.11 250)" }}>● Walks:</span>{" "}
+        {p.minutes == null ? "No log" : `${p.minutes} min`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {hs === 1 ? "Poor" : hs === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+      {rescueMeds.length > 0 && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.58 0.20 25)" }}>
+          ▲ Rescue: {rescueMeds.join(", ")}
+        </div>
+      )}
+      {flare && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.58 0.20 25)" }}>
+          Flare: {flare.start_time ?? "?"} – {flare.end_time ?? "?"}
+          {flare.symptoms?.length ? ` [${flare.symptoms.join(", ")}]` : ""}
+          {flare.intervention_med ? ` · ${flare.intervention_med}` : ""}
+        </div>
+      )}
+    </div>
+  );
+}
