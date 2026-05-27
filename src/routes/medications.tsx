@@ -266,7 +266,7 @@ function CapsuleTrack({
         return (
           <div
             key={d}
-            className="flex flex-col items-center shrink-0 basis-[calc((100%-1.5rem)/7)]"
+            className="flex flex-col items-center shrink-0 w-[calc((100%-6rem)/7)]"
           >
             <div
               title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
