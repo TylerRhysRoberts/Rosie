@@ -181,20 +181,6 @@ function LogPage() {
       flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), ...partial },
     }));
   };
-  const toggleFlareSymptom = (s: string) => {
-    setLog((prev) => {
-      const fe = prev.flare_event ?? EMPTY_FLARE_EVENT;
-      const has = fe.symptoms.includes(s);
-      return {
-        ...prev,
-        flare_event: {
-          ...fe,
-          symptoms: has ? fe.symptoms.filter((x) => x !== s) : [...fe.symptoms, s],
-        },
-      };
-    });
-  };
-
   // Toggle the flare flag, keeping medications in sync.
   // Turning flare OFF clears all rescue-dose flags (a rescue only exists in response to a flare).
   const setFlareOn = (next: boolean) => {
