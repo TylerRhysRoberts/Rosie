@@ -10,7 +10,7 @@ import {
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
   emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
-  FLARE_SYMPTOM_OPTIONS, EMPTY_FLARE_EVENT, FlareEvent,
+  EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
