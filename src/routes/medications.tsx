@@ -6,6 +6,7 @@ import {
   fetchLogs,
   DOSAGE_LABELS,
   DosageSize,
+  FlareEvent,
 } from "@/lib/daily-logs";
 import { Pill } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
@@ -18,6 +19,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Scatter,
+  ComposedChart,
 } from "recharts";
 
 export const Route = createFileRoute("/medications")({
