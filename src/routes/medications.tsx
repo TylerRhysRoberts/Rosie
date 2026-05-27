@@ -125,6 +125,14 @@ function MedicationsPage() {
       .map(([name, count]) => ({ name, count, days: perDay[name] || {} }));
   }, [logs, daySet]);
 
+  const healthByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const log of logs) {
+      if (daySet.has(log.log_date)) map[log.log_date] = log.health_score;
+    }
+    return map;
+  }, [logs, daySet]);
+
   useEffect(() => {
     if (rangeDays !== 7) return;
     // Pin to far right (Today) on render / range change.
@@ -209,7 +217,7 @@ function MedicationsPage() {
                     onSync={syncScroll}
                   />
                 ) : (
-                  <DoseTrendChart days={days} doses={m.days} />
+                  <DoseTrendChart days={days} doses={m.days} health={healthByDate} />
                 )}
               </div>
             ))}
