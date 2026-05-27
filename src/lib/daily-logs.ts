@@ -13,8 +13,8 @@ export type StoolConsistency =
 
 export const STOOL_OPTIONS: { value: StoolConsistency; label: string }[] = [
   { value: "formed", label: "No Issues" },
-  { value: "soft", label: "Soft / Unformed" },
-  { value: "loose", label: "Loose" },
+  { value: "soft", label: "Soft / Loose" },
+  { value: "loose", label: "Mucus" },
   { value: "liquid", label: "Liquid / Diarrhoea" },
   { value: "blood", label: "Blood" },
   { value: "constipation", label: "Constipation" },
