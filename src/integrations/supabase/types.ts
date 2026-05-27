@@ -21,6 +21,7 @@ export type Database = {
           flare_event: Json
           flare_up: boolean
           health_score: number
+          holiday_mode: boolean
           id: string
           location: string | null
           log_date: string
@@ -41,6 +42,7 @@ export type Database = {
           flare_event?: Json
           flare_up?: boolean
           health_score: number
+          holiday_mode?: boolean
           id?: string
           location?: string | null
           log_date: string
@@ -61,6 +63,7 @@ export type Database = {
           flare_event?: Json
           flare_up?: boolean
           health_score?: number
+          holiday_mode?: boolean
           id?: string
           location?: string | null
           log_date?: string

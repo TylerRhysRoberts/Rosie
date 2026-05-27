@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Palmtree } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -198,6 +198,10 @@ function LogPage() {
       flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), ...partial },
     }));
   };
+
+  const toggleHolidayMode = () => {
+    setLog((prev) => ({ ...prev, holiday_mode: !prev.holiday_mode }));
+  };
   // Toggle the flare flag, keeping medications in sync.
   // Turning flare OFF clears all rescue-dose flags (a rescue only exists in response to a flare).
   const setFlareOn = (next: boolean) => {
@@ -257,17 +261,34 @@ function LogPage() {
     if (!user) return;
     setSaving(true);
     try {
+      let working: DailyLog = log;
+      if (log.holiday_mode) {
+        working = {
+          ...working,
+          stool_consistency: ["formed"],
+          symptoms: ["No Issues"],
+          dins_percent: 100,
+          treats: ["Cheese"],
+          scavenged: [],
+          walks: [{ hours: 0, minutes: 30, completed: true }],
+          routine_type: "non_routine",
+          health_score: log.flare_up ? 1 : 2,
+          flare_event: log.flare_up
+            ? { ...(log.flare_event ?? EMPTY_FLARE_EVENT), had_flareup: true, start_time: "00:00", end_time: "23:59" }
+            : { ...EMPTY_FLARE_EVENT },
+        };
+      }
       // Auto-derive walk completion from inputs
-      const walks = log.walks.map((w) => ({
+      const walks = working.walks.map((w) => ({
         ...w,
         completed: (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0) > 0,
       }));
       // Flare symptoms always mirror the day-level symptoms list.
       const flare_event = {
-        ...(log.flare_event ?? EMPTY_FLARE_EVENT),
-        symptoms: log.flare_up ? [...log.symptoms] : [],
+        ...(working.flare_event ?? EMPTY_FLARE_EVENT),
+        symptoms: working.flare_up ? [...working.symptoms] : [],
       };
-      const saved = await upsertLog(user.id, { ...log, walks, flare_event });
+      const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
     } catch (err: any) {
@@ -322,14 +343,33 @@ function LogPage() {
               <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Daily Log</h1>
             </div>
             <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            {log.holiday_mode && (
+              <span className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[oklch(0.95_0.08_220)] border border-[oklch(0.7_0.14_220)] text-[oklch(0.4_0.15_220)] text-[10px] font-semibold uppercase tracking-wide">
+                <Palmtree className="w-3 h-3" /> Holiday Mode Active
+              </span>
+            )}
           </div>
-          <button
-            onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-            className="text-muted-foreground hover:text-foreground p-2 rounded-lg active:scale-95"
-            aria-label="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleHolidayMode}
+              className={`p-2 rounded-lg active:scale-95 transition-colors ${
+                log.holiday_mode
+                  ? "text-[oklch(0.5_0.18_220)] bg-[oklch(0.95_0.08_220)]"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Toggle holiday mode"
+              aria-pressed={log.holiday_mode}
+            >
+              <Palmtree className="w-4 h-4" />
+            </button>
+            <button
+              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+              className="text-muted-foreground hover:text-foreground p-2 rounded-lg active:scale-95"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Submission signifier */}
@@ -383,6 +423,11 @@ function LogPage() {
 
             {log.flare_up && (
               <div className="mt-3 rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
+                {log.holiday_mode ? (
+                  <div className="rounded-xl bg-muted border border-dashed border-border px-3 py-2.5 text-[12px] text-muted-foreground">
+                    Holiday mode: flare-up is logged as all day (00:00 – 23:59).
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
@@ -415,6 +460,7 @@ function LogPage() {
                     </select>
                   </div>
                 </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
@@ -449,6 +495,7 @@ function LogPage() {
             )}
           </Section>
 
+          {!log.holiday_mode && (
           <Section label="Overall Health Score">
             <div className="grid grid-cols-3 gap-3">
               {([1, 2, 3] as HealthScore[]).map((s) => {
@@ -472,8 +519,10 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
           {/* 3. Clinical observations */}
+          {!log.holiday_mode && (
           <Section label="Stool Consistency">
             <div className="grid grid-cols-3 gap-2">
               {STOOL_OPTIONS.map((opt) => {
@@ -494,7 +543,9 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Symptoms">
             <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
@@ -532,12 +583,16 @@ function LogPage() {
               placeholder="Add custom symptom…"
             />
           </Section>
+          )}
 
           {/* 4. Dietary inputs */}
+          {!log.holiday_mode && (
           <Section label="% of Dins" hint={`${log.dins_percent}%`}>
             <DinsSlider value={log.dins_percent} onChange={(v) => update("dins_percent", v)} />
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Treats">
             <div className="flex flex-wrap gap-2">
               {DEFAULT_TREATS.map((t) => {
@@ -563,7 +618,9 @@ function LogPage() {
               placeholder="Add custom treat…"
             />
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Scavenged / Additional Food">
             <div className="flex flex-wrap gap-2">
               {DEFAULT_SCAVENGED.map((t) => {
@@ -589,6 +646,7 @@ function LogPage() {
               placeholder="Add custom item…"
             />
           </Section>
+          )}
 
           {/* 5. Care & activities */}
           <Section label="Medications">
@@ -647,6 +705,7 @@ function LogPage() {
             </select>
           </Section>
 
+          {!log.holiday_mode && (
           <Section label="Routine Type">
             <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
               {(["routine", "non_routine"] as const).map((r) => {
@@ -665,7 +724,9 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section
             label="Walks"
             hint={
@@ -723,6 +784,7 @@ function LogPage() {
               )}
             </div>
           </Section>
+          )}
 
           <Section label="Notes">
             <textarea

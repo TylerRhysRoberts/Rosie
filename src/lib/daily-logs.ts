@@ -115,6 +115,7 @@ export interface DailyLog {
   scavenged: string[];
   walks: Walk[];
   notes: string;
+  holiday_mode: boolean;
 }
 
 export function todayKey(): string {
@@ -160,6 +161,7 @@ export function emptyLog(date = todayKey()): DailyLog {
     scavenged: [],
     walks: [],
     notes: "",
+    holiday_mode: false,
   };
 }
 
@@ -226,6 +228,7 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
     scavenged: log.scavenged,
     walks: log.walks,
     notes: log.notes,
+    holiday_mode: !!log.holiday_mode,
   };
   const { data, error } = await supabase
     .from("daily_logs")
@@ -283,6 +286,7 @@ function rowToLog(r: any): DailyLog {
     scavenged: r.scavenged ?? [],
     walks: r.walks ?? [],
     notes: r.notes ?? "",
+    holiday_mode: !!r.holiday_mode,
   };
 }
 

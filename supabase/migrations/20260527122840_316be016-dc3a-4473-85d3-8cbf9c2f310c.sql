@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_logs ADD COLUMN IF NOT EXISTS holiday_mode boolean NOT NULL DEFAULT false;
