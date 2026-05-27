@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
   deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, Trash2, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
