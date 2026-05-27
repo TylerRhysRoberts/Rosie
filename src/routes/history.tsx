@@ -4,9 +4,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
-  deleteLogByDate,
+  deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, Trash2, X } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, Trash2, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
