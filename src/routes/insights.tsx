@@ -314,7 +314,7 @@ function InsightsPage() {
               </h2>
               <div className="h-48 -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={walkTrend} margin={{ top: 5, right: 8, bottom: 0, left: 0 }}>
+                  <LineChart data={walkTrend} margin={{ top: 5, right: 20, bottom: 0, left: 0 }}>
                     <defs>
                       <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#22c55e" />
@@ -344,6 +344,7 @@ function InsightsPage() {
                       }
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
                       width={50}
+                      tickMargin={8}
                     />
                     <Tooltip
                       contentStyle={{
