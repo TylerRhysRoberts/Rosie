@@ -29,7 +29,11 @@ export const Route = createFileRoute("/app")({
   }),
 });
 
-const PRIMARY_MEDS = ["Medrone", "Probiotic"] as const;
+const TIME_OPTIONS: string[] = Array.from({ length: 96 }, (_, i) => {
+  const h = String(Math.floor(i / 4)).padStart(2, "0");
+  const m = String((i % 4) * 15).padStart(2, "0");
+  return `${h}:${m}`;
+});
 const SECONDARY_MEDS = MEDICATION_NAMES.filter(
   (n) => !(PRIMARY_MEDS as readonly string[]).includes(n),
 );
