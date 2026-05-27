@@ -319,9 +319,11 @@ function CapsuleTrack({
 function DoseTrendChart({
   days,
   doses,
+  health,
 }: {
   days: string[];
   doses: Record<string, DosageSize>;
+  health: Record<string, number>;
 }) {
   const data = days.map((d) => {
     const dose = doses[d];
@@ -329,12 +331,20 @@ function DoseTrendChart({
       date: d,
       label: d.slice(5), // MM-DD
       dose: dose ? DOSAGE_DECIMAL[dose] : 0,
+      healthScore: health[d] ?? null,
     };
   });
   return (
     <div className="h-32 -ml-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" />
+              <stop offset="50%" stopColor="#eab308" />
+              <stop offset="100%" stopColor="#ef4444" />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
           <XAxis
             dataKey="label"
@@ -351,13 +361,30 @@ function DoseTrendChart({
             tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
             width={28}
           />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            domain={[0.5, 3.5]}
+            ticks={[1, 2, 3]}
+            tickFormatter={(val) =>
+              val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""
+            }
+            tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
+            width={50}
+          />
           <Tooltip
             contentStyle={{
               borderRadius: 12,
               border: "1px solid oklch(0.9 0.01 80)",
               fontSize: 12,
             }}
-            formatter={(v: any) => [v === 0 ? "None" : `${v} dose`, "Amount"]}
+            formatter={(v: any, name: any) => {
+              if (name === "healthScore") {
+                if (v == null) return ["No log", "Health"];
+                return [v === 1 ? "Poor" : v === 2 ? "Neutral" : "Good", "Health"];
+              }
+              return [v === 0 ? "None" : `${v} dose`, "Amount"];
+            }}
           />
           <Line
             type="monotone"
@@ -365,6 +392,15 @@ function DoseTrendChart({
             stroke="oklch(0.72 0.16 0)"
             strokeWidth={2.5}
             dot={false}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="healthScore"
+            stroke="url(#healthGradient)"
+            strokeWidth={2.5}
+            dot={false}
+            connectNulls
           />
         </LineChart>
       </ResponsiveContainer>
