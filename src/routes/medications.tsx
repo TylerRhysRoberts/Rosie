@@ -46,6 +46,16 @@ const DOSAGE_DECIMAL: Record<DosageSize, number> = {
   eighth: 0.125,
 };
 
+const DOSAGE_FILL_PCT: Record<DosageSize, number> = {
+  whole: 100,
+  half: 50,
+  third: 33,
+  quarter: 25,
+  eighth: 12,
+};
+
+const WINDOW_DAYS = 14;
+
 function dateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -75,7 +85,8 @@ function MedicationsPage() {
     const arr: string[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    for (let i = rangeDays - 1; i >= 0; i--) {
+    const span = rangeDays === 7 ? WINDOW_DAYS : rangeDays;
+    for (let i = span - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       arr.push(dateKey(d));
@@ -105,11 +116,13 @@ function MedicationsPage() {
       .map(([name, count]) => ({ name, count, days: perDay[name] || {} }));
   }, [logs, daySet]);
 
-  // Pin most recent (right) into view for 7-day capsule track on render / range change.
   useEffect(() => {
     if (rangeDays !== 7) return;
-    Object.values(trackRefs.current).forEach((el) => {
-      if (el) el.scrollLeft = el.scrollWidth;
+    // Pin to far right (Today) on render / range change.
+    requestAnimationFrame(() => {
+      Object.values(trackRefs.current).forEach((el) => {
+        if (el) el.scrollLeft = el.scrollWidth;
+      });
     });
   }, [rangeDays, meds.length, mounted]);
 
