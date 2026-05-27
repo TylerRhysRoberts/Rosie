@@ -312,9 +312,9 @@ function InsightsPage() {
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
                 Daily Total Walk Duration
               </h2>
-              <div className="h-48 -ml-2">
+              <div className="h-48 w-full pr-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={walkTrend} margin={{ top: 5, right: 20, bottom: 0, left: 0 }}>
+                  <LineChart data={walkTrend} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
                     <defs>
                       <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#22c55e" />
@@ -326,24 +326,19 @@ function InsightsPage() {
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      interval="preserveStartEnd"
-                      minTickGap={20}
                     />
                     <YAxis
-                      domain={[0, Math.max(60, Math.ceil(maxWalk / 15) * 15)]}
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      width={28}
+                      width={30}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       domain={[0.5, 3.5]}
                       ticks={[1, 2, 3]}
-                      tickFormatter={(val) =>
-                        val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""
-                      }
+                      tickFormatter={(val) => val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""}
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      width={50}
+                      width={55}
                       tickMargin={8}
                     />
                     <Tooltip
@@ -362,21 +357,16 @@ function InsightsPage() {
                     />
                     <ReferenceLine
                       y={45}
-                      stroke="oklch(0.55 0.02 80)"
+                      stroke="oklch(0.72 0.16 0)"
+                      strokeWidth={1.5}
                       strokeDasharray="4 4"
-                      label={{
-                        value: "Daily Target (45m)",
-                        position: "insideTopRight",
-                        fontSize: 10,
-                        fill: "oklch(0.45 0.02 80)",
-                      }}
                     />
                     <Line
                       type="monotone"
                       dataKey="minutes"
-                      stroke="oklch(0.72 0.16 0)"
-                      strokeWidth={2.5}
-                      dot={{ r: 3, fill: "oklch(0.72 0.16 0)" }}
+                      stroke="oklch(0.6 0.11 250)"
+                      strokeWidth={2}
+                      dot={false}
                       connectNulls
                     />
                     <Line
@@ -384,7 +374,7 @@ function InsightsPage() {
                       type="monotone"
                       dataKey="healthScore"
                       stroke="url(#healthGradient)"
-                      strokeWidth={2.5}
+                      strokeWidth={3}
                       dot={false}
                       connectNulls
                     />
