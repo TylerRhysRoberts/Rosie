@@ -85,7 +85,7 @@ function InsightsPage() {
 
   const stoolCounts = STOOL_OPTIONS.map((opt) => ({
     ...opt,
-    count: ranged.filter((l) => l.stool_consistency === opt.value).length,
+    count: ranged.filter((l) => l.stool_consistency.includes(opt.value)).length,
   }));
   const stoolTotal = stoolCounts.reduce((s, x) => s + x.count, 0);
 

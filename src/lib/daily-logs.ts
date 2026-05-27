@@ -105,7 +105,7 @@ export interface DailyLog {
   health_score: HealthScore;
   flare_up: boolean;
   flare_event: FlareEvent;
-  stool_consistency: StoolConsistency | null;
+  stool_consistency: string[];
   symptoms: string[];
   medications: Record<string, Medication>;
   location: string | null;
@@ -150,7 +150,7 @@ export function emptyLog(date = todayKey()): DailyLog {
     health_score: 3,
     flare_up: false,
     flare_event: { ...EMPTY_FLARE_EVENT },
-    stool_consistency: "formed",
+    stool_consistency: ["formed"],
     symptoms: ["No Issues"],
     medications: emptyMedications(),
     location: "Home",
@@ -216,7 +216,7 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
     health_score: log.health_score,
     flare_up: log.flare_up,
     flare_event: log.flare_event ?? EMPTY_FLARE_EVENT,
-    stool_consistency: log.stool_consistency,
+    stool_consistency: log.stool_consistency ?? [],
     symptoms: log.symptoms,
     medications: log.medications,
     location: log.location,
@@ -269,7 +269,11 @@ function rowToLog(r: any): DailyLog {
     health_score: r.health_score as HealthScore,
     flare_up: !!r.flare_up,
     flare_event: flareEvent,
-    stool_consistency: (r.stool_consistency ?? null) as StoolConsistency | null,
+    stool_consistency: Array.isArray(r.stool_consistency)
+      ? r.stool_consistency
+      : r.stool_consistency
+        ? [r.stool_consistency as string]
+        : [],
     symptoms: r.symptoms ?? [],
     medications: meds,
     location: r.location,
@@ -322,7 +326,7 @@ export function logsToCsv(logs: DailyLog[]): string {
     l.health_score,
     SCORE_META[l.health_score].label,
     l.flare_up ? "yes" : "no",
-    l.stool_consistency ?? "",
+    (l.stool_consistency ?? []).join("; "),
     l.symptoms.join("; "),
     l.location ?? "",
     l.routine_type ?? "",

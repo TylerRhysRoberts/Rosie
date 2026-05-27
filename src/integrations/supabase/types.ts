@@ -28,7 +28,7 @@ export type Database = {
           notes: string
           routine_type: string | null
           scavenged: Json
-          stool_consistency: string | null
+          stool_consistency: string[]
           symptoms: string[]
           treats: Json
           updated_at: string
@@ -48,7 +48,7 @@ export type Database = {
           notes?: string
           routine_type?: string | null
           scavenged?: Json
-          stool_consistency?: string | null
+          stool_consistency?: string[]
           symptoms?: string[]
           treats?: Json
           updated_at?: string
@@ -68,7 +68,7 @@ export type Database = {
           notes?: string
           routine_type?: string | null
           scavenged?: Json
-          stool_consistency?: string | null
+          stool_consistency?: string[]
           symptoms?: string[]
           treats?: Json
           updated_at?: string

@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
-  STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
+  STOOL_OPTIONS, DEFAULT_TREATS, DEFAULT_SCAVENGED,
   emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
   EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
@@ -86,6 +86,18 @@ function LogPage() {
       if (!has && s === "No Issues") symptoms = ["No Issues"];
       else if (!has) symptoms = symptoms.filter((x) => x !== "No Issues");
       return { ...prev, symptoms };
+    });
+  };
+
+  const toggleStool = (s: string) => {
+    setLog((prev) => {
+      const has = prev.stool_consistency.includes(s);
+      let next = has
+        ? prev.stool_consistency.filter((x) => x !== s)
+        : [...prev.stool_consistency, s];
+      if (!has && s === "formed") next = ["formed"];
+      else if (!has) next = next.filter((x) => x !== "formed");
+      return { ...prev, stool_consistency: next };
     });
   };
 
@@ -465,11 +477,11 @@ function LogPage() {
           <Section label="Stool Consistency">
             <div className="grid grid-cols-3 gap-2">
               {STOOL_OPTIONS.map((opt) => {
-                const active = log.stool_consistency === opt.value;
+                const active = log.stool_consistency.includes(opt.value);
                 return (
                   <button
                     key={opt.value}
-                    onClick={() => update("stool_consistency", active ? null : (opt.value as StoolConsistency))}
+                    onClick={() => toggleStool(opt.value)}
                     className={`min-h-[48px] px-2 py-1 rounded-xl text-xs font-medium border transition-all active:scale-95 flex items-center justify-center text-center ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
