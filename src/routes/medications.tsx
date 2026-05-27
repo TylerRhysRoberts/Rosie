@@ -396,7 +396,7 @@ function DoseTrendChart({
           />
           <Line
             yAxisId="right"
-            type="linear"
+            type="monotone"
             dataKey="healthScore"
             stroke="url(#healthGradient)"
             strokeWidth={2.5}
