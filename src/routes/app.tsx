@@ -198,6 +198,10 @@ function LogPage() {
       flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), ...partial },
     }));
   };
+
+  const toggleHolidayMode = () => {
+    setLog((prev) => ({ ...prev, holiday_mode: !prev.holiday_mode }));
+  };
   // Toggle the flare flag, keeping medications in sync.
   // Turning flare OFF clears all rescue-dose flags (a rescue only exists in response to a flare).
   const setFlareOn = (next: boolean) => {
