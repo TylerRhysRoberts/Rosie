@@ -261,17 +261,34 @@ function LogPage() {
     if (!user) return;
     setSaving(true);
     try {
+      let working: DailyLog = log;
+      if (log.holiday_mode) {
+        working = {
+          ...working,
+          stool_consistency: ["formed"],
+          symptoms: ["No Issues"],
+          dins_percent: 100,
+          treats: ["Cheese"],
+          scavenged: [],
+          walks: [{ hours: 0, minutes: 30, completed: true }],
+          routine_type: "non_routine",
+          health_score: log.flare_up ? 1 : 2,
+          flare_event: log.flare_up
+            ? { ...(log.flare_event ?? EMPTY_FLARE_EVENT), had_flareup: true, start_time: "00:00", end_time: "23:59" }
+            : { ...EMPTY_FLARE_EVENT },
+        };
+      }
       // Auto-derive walk completion from inputs
-      const walks = log.walks.map((w) => ({
+      const walks = working.walks.map((w) => ({
         ...w,
         completed: (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0) > 0,
       }));
       // Flare symptoms always mirror the day-level symptoms list.
       const flare_event = {
-        ...(log.flare_event ?? EMPTY_FLARE_EVENT),
-        symptoms: log.flare_up ? [...log.symptoms] : [],
+        ...(working.flare_event ?? EMPTY_FLARE_EVENT),
+        symptoms: working.flare_up ? [...working.symptoms] : [],
       };
-      const saved = await upsertLog(user.id, { ...log, walks, flare_event });
+      const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
     } catch (err: any) {
