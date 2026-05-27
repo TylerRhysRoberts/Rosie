@@ -31,8 +31,8 @@ export const Route = createFileRoute("/medications")({
 });
 
 const SHORT_DOSAGE: Record<DosageSize, string> = {
-  whole: "Whole",
-  half: "Half",
+  whole: "1",
+  half: "1/2",
   third: "1/3",
   quarter: "1/4",
   eighth: "1/8",
@@ -70,6 +70,15 @@ function MedicationsPage() {
   const [mounted, setMounted] = useState(false);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
   const trackRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const syncScroll = (source: HTMLDivElement) => {
+    const left = source.scrollLeft;
+    Object.values(trackRefs.current).forEach((el) => {
+      if (el && el !== source && el.scrollLeft !== left) {
+        el.scrollLeft = left;
+      }
+    });
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -197,6 +206,7 @@ function MedicationsPage() {
                     trackRef={(el) => {
                       trackRefs.current[m.name] = el;
                     }}
+                    onSync={syncScroll}
                   />
                 ) : (
                   <DoseTrendChart days={days} doses={m.days} />
@@ -215,10 +225,12 @@ function CapsuleTrack({
   days,
   doses,
   trackRef,
+  onSync,
 }: {
   days: string[];
   doses: Record<string, DosageSize>;
   trackRef: (el: HTMLDivElement | null) => void;
+  onSync?: (source: HTMLDivElement) => void;
 }) {
   const localRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{ active: boolean; startX: number; startScroll: number }>({
@@ -243,6 +255,7 @@ function CapsuleTrack({
     e.preventDefault();
     const walk = e.pageX - dragState.current.startX;
     localRef.current.scrollLeft = dragState.current.startScroll - walk;
+    onSync?.(localRef.current);
   };
 
   return (
@@ -255,6 +268,7 @@ function CapsuleTrack({
       onMouseLeave={endDrag}
       onMouseUp={endDrag}
       onMouseMove={handleMouseMove}
+      onScroll={(e) => onSync?.(e.currentTarget)}
       className="flex flex-row overflow-x-auto gap-4 pb-2 w-full touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {days.map((d) => {
