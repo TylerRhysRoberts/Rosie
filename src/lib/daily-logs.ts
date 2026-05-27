@@ -66,6 +66,7 @@ export const DOSAGE_LABELS: Record<DosageSize, string> = {
 export interface Medication {
   taken: boolean;
   dosage: DosageSize;
+  is_rescue?: boolean;
 }
 
 export interface Walk {
@@ -74,11 +75,36 @@ export interface Walk {
   completed?: boolean;
 }
 
+export interface FlareEvent {
+  had_flareup: boolean;
+  start_time: string | null; // "HH:MM"
+  end_time: string | null;   // "HH:MM"
+  symptoms: string[];
+  intervention_med: string | null;
+}
+
+export const EMPTY_FLARE_EVENT: FlareEvent = {
+  had_flareup: false,
+  start_time: null,
+  end_time: null,
+  symptoms: [],
+  intervention_med: null,
+};
+
+export const FLARE_SYMPTOM_OPTIONS = [
+  "Squelching",
+  "Lethargy",
+  "Loss of Appetite",
+  "Vomiting",
+  "Diarrhoea",
+] as const;
+
 export interface DailyLog {
   id?: string;
   log_date: string; // YYYY-MM-DD
   health_score: HealthScore;
   flare_up: boolean;
+  flare_event: FlareEvent;
   stool_consistency: StoolConsistency | null;
   symptoms: string[];
   medications: Record<string, Medication>;
@@ -111,7 +137,7 @@ export function emptyMedications(): Record<string, Medication> {
     "Worming Meds": "whole",
   };
   for (const name of MEDICATION_NAMES)
-    out[name] = { taken: false, dosage: defaults[name] ?? "whole" };
+    out[name] = { taken: false, dosage: defaults[name] ?? "whole", is_rescue: false };
   return out;
 }
 
@@ -123,6 +149,7 @@ export function emptyLog(date = todayKey()): DailyLog {
     log_date: date,
     health_score: 3,
     flare_up: false,
+    flare_event: { ...EMPTY_FLARE_EVENT },
     stool_consistency: "formed",
     symptoms: ["No Issues"],
     medications: emptyMedications(),
@@ -188,6 +215,7 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
     log_date: log.log_date,
     health_score: log.health_score,
     flare_up: log.flare_up,
+    flare_event: log.flare_event ?? EMPTY_FLARE_EVENT,
     stool_consistency: log.stool_consistency,
     symptoms: log.symptoms,
     medications: log.medications,
@@ -218,14 +246,32 @@ export async function deleteLogByDate(userId: string, date: string): Promise<voi
 }
 
 function rowToLog(r: any): DailyLog {
+  const rawFlare = r.flare_event ?? {};
+  const flareEvent: FlareEvent = {
+    had_flareup: !!rawFlare.had_flareup,
+    start_time: rawFlare.start_time ?? null,
+    end_time: rawFlare.end_time ?? null,
+    symptoms: Array.isArray(rawFlare.symptoms) ? rawFlare.symptoms : [],
+    intervention_med: rawFlare.intervention_med ?? null,
+  };
+  const rawMeds = r.medications ?? {};
+  const meds: Record<string, Medication> = { ...emptyMedications() };
+  for (const [name, m] of Object.entries(rawMeds as Record<string, any>)) {
+    meds[name] = {
+      taken: !!m?.taken,
+      dosage: (m?.dosage ?? "whole") as DosageSize,
+      is_rescue: !!m?.is_rescue,
+    };
+  }
   return {
     id: r.id,
     log_date: r.log_date,
     health_score: r.health_score as HealthScore,
     flare_up: !!r.flare_up,
+    flare_event: flareEvent,
     stool_consistency: (r.stool_consistency ?? null) as StoolConsistency | null,
     symptoms: r.symptoms ?? [],
-    medications: { ...emptyMedications(), ...(r.medications ?? {}) },
+    medications: meds,
     location: r.location,
     routine_type: r.routine_type,
     dins_percent: typeof r.dins_percent === "number" ? r.dins_percent : 100,
@@ -268,7 +314,8 @@ export function logsToCsv(logs: DailyLog[]): string {
   const headers = [
     "date", "health_score", "score_label", "flare_up", "stool_consistency",
     "symptoms", "location", "routine_type", "dins_percent", "treats", "scavenged",
-    "walks_total_minutes", "walks_completed", "medications", "notes",
+    "walks_total_minutes", "walks_completed", "medications", "rescue_meds",
+    "flare_start", "flare_end", "flare_symptoms", "flare_intervention", "notes",
   ];
   const rows = logs.map((l) => [
     l.log_date,
@@ -288,6 +335,14 @@ export function logsToCsv(logs: DailyLog[]): string {
       .filter(([, m]) => m.taken)
       .map(([n, m]) => `${n} (${DOSAGE_LABELS[m.dosage]})`)
       .join("; "),
+    Object.entries(l.medications)
+      .filter(([, m]) => m.taken && m.is_rescue)
+      .map(([n, m]) => `${n} (${DOSAGE_LABELS[m.dosage]})`)
+      .join("; "),
+    l.flare_event?.start_time ?? "",
+    l.flare_event?.end_time ?? "",
+    (l.flare_event?.symptoms ?? []).join("; "),
+    l.flare_event?.intervention_med ?? "",
     l.notes,
   ]);
   return [headers, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
