@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog,
@@ -10,6 +10,15 @@ import {
 import { Pill } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export const Route = createFileRoute("/medications")({
   component: MedicationsPage,
@@ -29,6 +38,14 @@ const SHORT_DOSAGE: Record<DosageSize, string> = {
   eighth: "1/8",
 };
 
+const DOSAGE_DECIMAL: Record<DosageSize, number> = {
+  whole: 1,
+  half: 0.5,
+  third: 0.33,
+  quarter: 0.25,
+  eighth: 0.125,
+};
+
 function dateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -42,6 +59,7 @@ function MedicationsPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const trackRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (isLoading) return;
@@ -87,6 +105,14 @@ function MedicationsPage() {
       .map(([name, count]) => ({ name, count, days: perDay[name] || {} }));
   }, [logs, daySet]);
 
+  // Pin most recent (right) into view for 7-day capsule track on render / range change.
+  useEffect(() => {
+    if (rangeDays !== 7) return;
+    Object.values(trackRefs.current).forEach((el) => {
+      if (el) el.scrollLeft = el.scrollWidth;
+    });
+  }, [rangeDays, meds.length, mounted]);
+
   if (!mounted) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -98,23 +124,21 @@ function MedicationsPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2.5">
-            <img src={rosieLogo} alt="Rosie" className="w-9 h-9 rounded-full" />
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
-                Medications
-              </h1>
-              <p className="text-[11px] text-muted-foreground">
-                Dosage history at a glance
-              </p>
-            </div>
+        {/* Header — matches other tabs (logo right) */}
+        <div className="flex items-start justify-between animate-fade-up-blur">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+              Dosage history
+            </p>
+            <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">
+              Medications
+            </h1>
           </div>
-        </header>
+          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+        </div>
 
         {/* Sticky range filter */}
-        <div className="sticky top-0 z-10 -mx-5 px-5 pb-3 bg-background">
+        <div className="sticky top-0 z-10 -mx-5 px-5 pt-5 pb-3 bg-background">
           <div className="flex gap-2 bg-muted rounded-full p-1">
             {([7, 30, 90] as const).map((n) => (
               <button
@@ -152,38 +176,123 @@ function MedicationsPage() {
                     {m.count} {m.count === 1 ? "dose" : "doses"} total
                   </span>
                 </div>
-                <div
-                  className="grid gap-1"
-                  style={{
-                    gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {days.map((d) => {
-                    const dose = m.days[d];
-                    const taken = !!dose;
-                    return (
-                      <div
-                        key={d}
-                        title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
-                        className={`aspect-[1/2.4] rounded-full flex items-center justify-center text-[8px] font-semibold leading-none px-0.5 ${
-                          taken
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/60 border border-border text-transparent"
-                        }`}
-                      >
-                        <span className="rotate-0 text-center break-words">
-                          {taken ? SHORT_DOSAGE[dose!] : ""}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+
+                {rangeDays === 7 ? (
+                  <CapsuleTrack
+                    days={days}
+                    doses={m.days}
+                    trackRef={(el) => {
+                      trackRefs.current[m.name] = el;
+                    }}
+                  />
+                ) : (
+                  <DoseTrendChart days={days} doses={m.days} />
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
       <BottomNav />
+    </div>
+  );
+}
+
+function CapsuleTrack({
+  days,
+  doses,
+  trackRef,
+}: {
+  days: string[];
+  doses: Record<string, DosageSize>;
+  trackRef: (el: HTMLDivElement | null) => void;
+}) {
+  return (
+    <div
+      ref={trackRef}
+      className="overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div
+        className="grid gap-1"
+        style={{
+          gridTemplateColumns: `repeat(${days.length}, minmax(36px, 1fr))`,
+          minWidth: days.length > 7 ? `${days.length * 40}px` : undefined,
+        }}
+      >
+        {days.map((d) => {
+          const dose = doses[d];
+          const taken = !!dose;
+          return (
+            <div
+              key={d}
+              title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
+              className={`aspect-[1/2.4] rounded-full flex items-center justify-center text-[9px] font-semibold leading-none px-0.5 ${
+                taken
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/60 border border-border text-transparent"
+              }`}
+            >
+              <span className="text-center">{taken ? SHORT_DOSAGE[dose] : ""}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DoseTrendChart({
+  days,
+  doses,
+}: {
+  days: string[];
+  doses: Record<string, DosageSize>;
+}) {
+  const data = days.map((d) => {
+    const dose = doses[d];
+    return {
+      date: d,
+      label: d.slice(5), // MM-DD
+      dose: dose ? DOSAGE_DECIMAL[dose] : 0,
+    };
+  });
+  return (
+    <div className="h-32 -ml-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
+            interval="preserveStartEnd"
+            minTickGap={24}
+          />
+          <YAxis
+            domain={[0, 1]}
+            ticks={[0, 0.25, 0.5, 1]}
+            tickFormatter={(v) =>
+              v === 0 ? "0" : v === 1 ? "1" : v === 0.5 ? "½" : v === 0.25 ? "¼" : String(v)
+            }
+            tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
+            width={28}
+          />
+          <Tooltip
+            contentStyle={{
+              borderRadius: 12,
+              border: "1px solid oklch(0.9 0.01 80)",
+              fontSize: 12,
+            }}
+            formatter={(v: any) => [v === 0 ? "None" : `${v} dose`, "Amount"]}
+          />
+          <Line
+            type="monotone"
+            dataKey="dose"
+            stroke="oklch(0.72 0.16 0)"
+            strokeWidth={2.5}
+            dot={{ r: 2.5, fill: "oklch(0.72 0.16 0)" }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }

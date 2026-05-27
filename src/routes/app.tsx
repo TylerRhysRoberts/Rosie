@@ -788,13 +788,17 @@ function NumInput({ value, onChange, max, suffix }: { value: number; onChange: (
   return (
     <div className="flex-1 flex items-center gap-1 bg-muted rounded-lg px-2.5 py-1.5">
       <input
-        type="number"
-        min={0}
-        max={max}
-        value={value}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={String(value)}
+        onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => {
-          const n = Math.max(0, Math.min(max, Number(e.target.value) || 0));
-          onChange(n);
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          if (raw === "") { onChange(0); return; }
+          const parsed = parseInt(raw, 10);
+          if (Number.isNaN(parsed)) { onChange(0); return; }
+          onChange(Math.max(0, Math.min(max, parsed)));
         }}
         className="w-full bg-transparent text-center text-base font-mono font-medium text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
