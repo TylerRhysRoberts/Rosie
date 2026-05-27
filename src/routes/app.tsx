@@ -259,7 +259,12 @@ function LogPage() {
         ...w,
         completed: (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0) > 0,
       }));
-      const saved = await upsertLog(user.id, { ...log, walks });
+      // Flare symptoms always mirror the day-level symptoms list.
+      const flare_event = {
+        ...(log.flare_event ?? EMPTY_FLARE_EVENT),
+        symptoms: log.flare_up ? [...log.symptoms] : [],
+      };
+      const saved = await upsertLog(user.id, { ...log, walks, flare_event });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
     } catch (err: any) {
@@ -382,6 +387,7 @@ function LogPage() {
                     </label>
                     <input
                       type="time"
+                      step={900}
                       value={log.flare_event?.start_time ?? ""}
                       onChange={(e) => updateFlare({ start_time: e.target.value || null })}
                       className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -393,35 +399,11 @@ function LogPage() {
                     </label>
                     <input
                       type="time"
+                      step={900}
                       value={log.flare_event?.end_time ?? ""}
                       onChange={(e) => updateFlare({ end_time: e.target.value || null })}
                       className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                    Flare symptoms
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {FLARE_SYMPTOM_OPTIONS.map((s) => {
-                      const active = (log.flare_event?.symptoms ?? []).includes(s);
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => toggleFlareSymptom(s)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
-                            active
-                              ? "bg-[oklch(0.58_0.20_25)] text-white border-[oklch(0.58_0.20_25)]"
-                              : "bg-card text-foreground border-border hover:border-[oklch(0.68_0.20_25)]/60"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      );
-                    })}
                   </div>
                 </div>
 
