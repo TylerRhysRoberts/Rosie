@@ -247,6 +247,11 @@ function MedicationsPage() {
   );
 }
 
+type DoseEntry = { dosage: DosageSize; is_rescue: boolean };
+
+const RESCUE_STRIPE =
+  "repeating-linear-gradient(45deg, oklch(0.72 0.16 0), oklch(0.72 0.16 0) 4px, oklch(0.85 0.10 0) 4px, oklch(0.85 0.10 0) 8px)";
+
 function CapsuleTrack({
   days,
   doses,
@@ -254,7 +259,7 @@ function CapsuleTrack({
   onSync,
 }: {
   days: string[];
-  doses: Record<string, DosageSize>;
+  doses: Record<string, DoseEntry>;
   trackRef: (el: HTMLDivElement | null) => void;
   onSync?: (source: HTMLDivElement) => void;
 }) {
@@ -298,9 +303,11 @@ function CapsuleTrack({
       className="flex flex-row overflow-x-auto gap-4 pb-2 w-full touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {days.map((d) => {
-        const dose = doses[d];
-        const taken = !!dose;
-        const pct = taken ? DOSAGE_FILL_PCT[dose] : 0;
+        const entry = doses[d];
+        const taken = !!entry;
+        const dosage = entry?.dosage;
+        const isRescue = !!entry?.is_rescue;
+        const pct = taken ? DOSAGE_FILL_PCT[dosage!] : 0;
         const [, mm, dd] = d.split("-");
         const stamp = `${parseInt(dd, 10)}/${parseInt(mm, 10)}`;
         return (
@@ -309,23 +316,31 @@ function CapsuleTrack({
             className="flex flex-col items-center shrink-0 w-[calc((100%-6rem)/7)]"
           >
             <div
-              title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
-              className="relative h-20 w-full rounded-full overflow-hidden bg-muted/60 border border-border select-none"
+              title={`${d}${dosage ? ` · ${DOSAGE_LABELS[dosage]}${isRescue ? " (Rescue)" : ""}` : ""}`}
+              className={`relative h-20 w-full rounded-full overflow-hidden bg-muted/60 select-none ${
+                isRescue ? "border-2 border-[oklch(0.58_0.20_25)]" : "border border-border"
+              }`}
             >
               {taken && (
                 <div
-                  className="absolute inset-x-0 bottom-0 bg-primary"
-                  style={{ height: `${pct}%` }}
+                  className={!isRescue ? "absolute inset-x-0 bottom-0 bg-primary" : "absolute inset-x-0 bottom-0"}
+                  style={{
+                    height: `${pct}%`,
+                    ...(isRescue ? { background: RESCUE_STRIPE } : {}),
+                  }}
                 />
               )}
               {taken && (
-                <span className="absolute inset-x-0 bottom-1 text-center text-[8px] font-semibold leading-none text-primary-foreground">
-                  {SHORT_DOSAGE[dose]}
+                <span
+                  className="absolute inset-x-0 bottom-1 text-center text-[9px] font-bold leading-none text-primary-foreground"
+                  style={{ textShadow: "0 1px 2px oklch(0 0 0 / 0.35)" }}
+                >
+                  {SHORT_DOSAGE[dosage!]}
                 </span>
               )}
             </div>
-            <span className="mt-1 text-[9px] text-muted-foreground tabular-nums">
-              {stamp}
+            <span className={`mt-1 text-[9px] tabular-nums ${isRescue ? "text-[oklch(0.58_0.20_25)] font-semibold" : "text-muted-foreground"}`}>
+              {stamp}{isRescue ? " ⚠" : ""}
             </span>
           </div>
         );
@@ -338,18 +353,27 @@ function DoseTrendChart({
   days,
   doses,
   health,
+  flares,
 }: {
   days: string[];
-  doses: Record<string, DosageSize>;
+  doses: Record<string, DoseEntry>;
   health: Record<string, number>;
+  flares: Record<string, FlareEvent>;
 }) {
   const data = days.map((d) => {
-    const dose = doses[d];
+    const entry = doses[d];
+    const dose = entry?.dosage;
+    const value = entry ? DOSAGE_DECIMAL[entry.dosage] : 0;
+    const isRescue = !!entry?.is_rescue;
     return {
       date: d,
       label: d.slice(5), // MM-DD
-      dose: dose ? DOSAGE_DECIMAL[dose] : 0,
+      dose: value,
+      routineDose: isRescue ? null : value,
+      rescueDose: isRescue ? value : null,
+      rescueLabel: isRescue && dose ? DOSAGE_LABELS[dose] : null,
       healthScore: health[d] ?? null,
+      flare: flares[d] ?? null,
     };
   });
   return (
@@ -397,25 +421,47 @@ function DoseTrendChart({
               border: "1px solid oklch(0.9 0.01 80)",
               fontSize: 12,
             }}
-            formatter={(v: any, name: any) => {
-              if (name === "healthScore") {
-                if (v == null) return ["No log", "Health"];
-                return [v === 1 ? "Poor" : v === 2 ? "Neutral" : "Good", "Health"];
-              }
-              return [v === 0 ? "None" : `${v} dose`, "Amount"];
-            }}
+            content={<DoseTooltip />}
           />
           <Line
             type="monotone"
-            dataKey="dose"
+            dataKey="routineDose"
+            name="Routine"
             stroke="oklch(0.72 0.16 0)"
             strokeWidth={2.5}
             dot={false}
+            connectNulls
+          />
+          <Line
+            type="monotone"
+            dataKey="rescueDose"
+            name="Rescue"
+            stroke="oklch(0.58 0.20 25)"
+            strokeWidth={0}
+            dot={(props: any) => {
+              const { cx, cy, payload, index } = props;
+              if (payload?.rescueDose == null || cx == null || cy == null) {
+                // Recharts requires a returned SVG element; render an empty group.
+                return <g key={`rescue-empty-${index}`} />;
+              }
+              return (
+                <polygon
+                  key={`rescue-${index}`}
+                  points={`${cx},${cy - 6} ${cx - 6},${cy + 5} ${cx + 6},${cy + 5}`}
+                  fill="oklch(0.58 0.20 25)"
+                  stroke="white"
+                  strokeWidth={1.5}
+                />
+              );
+            }}
+            activeDot={false}
+            isAnimationActive={false}
           />
           <Line
             yAxisId="right"
             type="monotone"
             dataKey="healthScore"
+            name="Health"
             stroke="url(#healthGradient)"
             strokeWidth={2.5}
             dot={false}
@@ -423,6 +469,50 @@ function DoseTrendChart({
           />
         </LineChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+function DoseTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const fmtDose = (v: number | null) =>
+    v == null || v === 0 ? "None" : v === 1 ? "1 dose" : `${v} dose`;
+  const flare: FlareEvent | null = p.flare;
+  const hs = p.healthScore;
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 140,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      {p.routineDose != null && (
+        <div className="text-[11px]">
+          <span style={{ color: "oklch(0.72 0.16 0)" }}>● Routine:</span> {fmtDose(p.routineDose)}
+        </div>
+      )}
+      {p.rescueDose != null && (
+        <div className="text-[11px]" style={{ color: "oklch(0.58 0.20 25)" }}>
+          ▲ Rescue: {p.rescueLabel ?? fmtDose(p.rescueDose)}
+        </div>
+      )}
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {hs === 1 ? "Poor" : hs === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+      {flare && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.58 0.20 25)" }}>
+          Flare: {flare.start_time ?? "?"} – {flare.end_time ?? "?"}
+          {flare.symptoms.length > 0 ? ` [${flare.symptoms.join(", ")}]` : ""}
+        </div>
+      )}
     </div>
   );
 }
