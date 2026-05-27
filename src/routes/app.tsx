@@ -429,23 +429,30 @@ function LogPage() {
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
                     Intervention applied
                   </label>
-                  <select
-                    value={log.flare_event?.intervention_med ?? ""}
-                    onChange={(e) => updateFlare({ intervention_med: e.target.value || null })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="">No intervention</option>
-                    {Object.entries(log.medications)
-                      .filter(([, m]) => m.taken)
-                      .map(([name]) => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                  </select>
-                  {Object.values(log.medications).filter((m) => m.taken).length === 0 && (
-                    <p className="text-[11px] text-muted-foreground mt-1.5">
-                      Log a medication below to link it as the intervention.
-                    </p>
-                  )}
+                  {(() => {
+                    const rescueMeds = Object.entries(log.medications)
+                      .filter(([, m]) => m.taken && m.is_rescue)
+                      .map(([n]) => n);
+                    if (rescueMeds.length === 0) {
+                      return (
+                        <div className="px-3 py-2.5 rounded-xl bg-muted border border-dashed border-border text-[12px] text-muted-foreground">
+                          Tick <span className="font-semibold">Rescue dose</span> on a medication below — all rescue meds will be auto-listed as interventions.
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex flex-wrap gap-1.5 px-3 py-2.5 rounded-xl bg-muted border border-border">
+                        {rescueMeds.map((n) => (
+                          <span
+                            key={n}
+                            className="px-2.5 py-1 rounded-full bg-[oklch(0.58_0.20_25)] text-white text-xs font-semibold"
+                          >
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
