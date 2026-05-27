@@ -104,17 +104,31 @@ function InsightsPage() {
   }
 
   // Build chronological walk-duration data (one point per day in range)
-  const walkTrend: { date: string; label: string; minutes: number | null; healthScore: number | null }[] = [];
+  const walkTrend: {
+    date: string;
+    label: string;
+    minutes: number | null;
+    healthScore: number | null;
+    flare: DailyLog["flare_event"] | null;
+    rescueMeds: string[];
+  }[] = [];
   for (let i = rangeDays - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
     const match = ranged.find((l) => l.log_date === key);
+    const rescueMeds = match
+      ? Object.entries(match.medications)
+          .filter(([, m]) => m.taken && m.is_rescue)
+          .map(([n, m]) => `${n} (${m.dosage})`)
+      : [];
     walkTrend.push({
       date: key,
       label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
       minutes: match ? totalWalkMinutes(match.walks) : null,
       healthScore: match ? match.health_score : null,
+      flare: match?.flare_event?.had_flareup ? match.flare_event : null,
+      rescueMeds,
     });
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
@@ -347,13 +361,7 @@ function InsightsPage() {
                         border: "1px solid oklch(0.9 0.01 80)",
                         fontSize: 12,
                       }}
-                      formatter={(v: any, name: any) => {
-                        if (name === "healthScore") {
-                          if (v == null) return ["No log", "Health"];
-                          return [v === 1 ? "Poor" : v === 2 ? "Neutral" : "Good", "Health"];
-                        }
-                        return v === null ? ["No log", "Walks"] : [`${v} min`, "Total walks"];
-                      }}
+                      content={<WalkTooltip />}
                     />
                     <ReferenceLine
                       y={45}
@@ -409,6 +417,49 @@ function EmptyState() {
       <p className="text-sm text-muted-foreground mt-1.5 max-w-[240px] mx-auto">
         Save a daily log to start seeing trends here.
       </p>
+    </div>
+  );
+}
+
+function WalkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const hs = p.healthScore;
+  const flare = p.flare;
+  const rescueMeds: string[] = p.rescueMeds ?? [];
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.6 0.11 250)" }}>● Walks:</span>{" "}
+        {p.minutes == null ? "No log" : `${p.minutes} min`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {hs === 1 ? "Poor" : hs === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+      {rescueMeds.length > 0 && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.58 0.20 25)" }}>
+          ▲ Rescue: {rescueMeds.join(", ")}
+        </div>
+      )}
+      {flare && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.58 0.20 25)" }}>
+          Flare: {flare.start_time ?? "?"} – {flare.end_time ?? "?"}
+          {flare.symptoms?.length ? ` [${flare.symptoms.join(", ")}]` : ""}
+          {flare.intervention_med ? ` · ${flare.intervention_med}` : ""}
+        </div>
+      )}
     </div>
   );
 }

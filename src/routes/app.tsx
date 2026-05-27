@@ -10,6 +10,7 @@ import {
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
   emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
+  FLARE_SYMPTOM_OPTIONS, EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -114,7 +115,7 @@ function LogPage() {
     reset();
   };
 
-  const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string }>) => {
+  const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
     setLog((prev) => ({
       ...prev,
       medications: {
@@ -130,7 +131,7 @@ function LogPage() {
     setLog((prev) =>
       prev.medications[v]
         ? prev
-        : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole" } } },
+        : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole", is_rescue: false } } },
     );
     setCustomMed("");
   };
@@ -141,6 +142,26 @@ function LogPage() {
       const next = { ...prev.medications };
       delete next[name];
       return { ...prev, medications: next };
+    });
+  };
+
+  const updateFlare = (partial: Partial<FlareEvent>) => {
+    setLog((prev) => ({
+      ...prev,
+      flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), ...partial },
+    }));
+  };
+  const toggleFlareSymptom = (s: string) => {
+    setLog((prev) => {
+      const fe = prev.flare_event ?? EMPTY_FLARE_EVENT;
+      const has = fe.symptoms.includes(s);
+      return {
+        ...prev,
+        flare_event: {
+          ...fe,
+          symptoms: has ? fe.symptoms.filter((x) => x !== s) : [...fe.symptoms, s],
+        },
+      };
     });
   };
 
@@ -281,7 +302,11 @@ function LogPage() {
           {/* 2. Severity & alert flags */}
           <Section label="Flare-Up Alert">
             <button
-              onClick={() => update("flare_up", !log.flare_up)}
+              onClick={() => {
+                const next = !log.flare_up;
+                update("flare_up", next);
+                updateFlare({ had_flareup: next });
+              }}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
                 log.flare_up
                   ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
@@ -296,8 +321,91 @@ function LogPage() {
                   {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
                 </span>
               </div>
-              <Toggle on={log.flare_up} onChange={(v) => update("flare_up", v)} />
+              <Toggle
+                on={log.flare_up}
+                onChange={(v) => {
+                  update("flare_up", v);
+                  updateFlare({ had_flareup: v });
+                }}
+              />
             </button>
+
+            {log.flare_up && (
+              <div className="mt-3 rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                      Start time
+                    </label>
+                    <input
+                      type="time"
+                      value={log.flare_event?.start_time ?? ""}
+                      onChange={(e) => updateFlare({ start_time: e.target.value || null })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                      Resolution time
+                    </label>
+                    <input
+                      type="time"
+                      value={log.flare_event?.end_time ?? ""}
+                      onChange={(e) => updateFlare({ end_time: e.target.value || null })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                    Flare symptoms
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {FLARE_SYMPTOM_OPTIONS.map((s) => {
+                      const active = (log.flare_event?.symptoms ?? []).includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleFlareSymptom(s)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
+                            active
+                              ? "bg-[oklch(0.58_0.20_25)] text-white border-[oklch(0.58_0.20_25)]"
+                              : "bg-card text-foreground border-border hover:border-[oklch(0.68_0.20_25)]/60"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                    Intervention applied
+                  </label>
+                  <select
+                    value={log.flare_event?.intervention_med ?? ""}
+                    onChange={(e) => updateFlare({ intervention_med: e.target.value || null })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    <option value="">No intervention</option>
+                    {Object.entries(log.medications)
+                      .filter(([, m]) => m.taken)
+                      .map(([name]) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                  </select>
+                  {Object.values(log.medications).filter((m) => m.taken).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      Log a medication below to link it as the intervention.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </Section>
 
           <Section label="Overall Health Score">
@@ -447,39 +555,13 @@ function LogPage() {
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                  </div>
+                  <MedRow key={name} name={name} med={med} setMed={setMed} />
                 );
               })}
               {showMoreMeds && SECONDARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                  </div>
+                  <MedRow key={name} name={name} med={med} setMed={setMed} />
                 );
               })}
               <button
@@ -493,27 +575,13 @@ function LogPage() {
               {customMedNames.map((name) => {
                 const med = log.medications[name];
                 return (
-                  <div key={name} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
-                    <select
-                      value={med.dosage}
-                      onChange={(e) => setMed(name, { dosage: e.target.value })}
-                      disabled={!med.taken}
-                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
-                    >
-                      {DOSAGE_OPTIONS.map((d) => (
-                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
-                      ))}
-                    </select>
-                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
-                    <button
-                      onClick={() => removeMed(name)}
-                      className="text-muted-foreground hover:text-destructive p-1 rounded active:scale-90"
-                      aria-label={`Remove ${name}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <MedRow
+                    key={name}
+                    name={name}
+                    med={med}
+                    setMed={setMed}
+                    onRemove={() => removeMed(name)}
+                  />
                 );
               })}
             </div>
@@ -781,6 +849,59 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
         }`}
       />
     </span>
+  );
+}
+
+function MedRow({
+  name,
+  med,
+  setMed,
+  onRemove,
+}: {
+  name: string;
+  med: { taken: boolean; dosage: string; is_rescue?: boolean };
+  setMed: (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+        <select
+          value={med.dosage}
+          onChange={(e) => setMed(name, { dosage: e.target.value })}
+          disabled={!med.taken}
+          className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
+        >
+          {DOSAGE_OPTIONS.map((d) => (
+            <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
+          ))}
+        </select>
+        <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="text-muted-foreground hover:text-destructive p-1 rounded active:scale-90"
+            aria-label={`Remove ${name}`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      {med.taken && (
+        <label className="mt-2 flex items-center justify-end gap-2 cursor-pointer select-none">
+          <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
+            Rescue dose
+          </span>
+          <input
+            type="checkbox"
+            checked={!!med.is_rescue}
+            onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
+            className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
+          />
+        </label>
+      )}
+    </div>
   );
 }
 
