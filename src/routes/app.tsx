@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Palmtree } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -332,7 +332,7 @@ function LogPage() {
   return (
     <div
       className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden transition-colors ${
-        flareAccent ? "bg-[oklch(0.97_0.04_25)]" : ""
+        flareAccent ? "bg-[oklch(0.97_0.04_25)]" : log.holiday_mode ? "bg-[oklch(0.96_0.03_230)]" : ""
       }`}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
@@ -340,16 +340,20 @@ function LogPage() {
           <div className="flex items-center gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
-              <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Daily Log</h1>
+              <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">
+                {log.holiday_mode ? "Holiday Mode" : "Daily Log"}
+              </h1>
             </div>
             <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
-            {log.holiday_mode && (
-              <span className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[oklch(0.95_0.08_220)] border border-[oklch(0.7_0.14_220)] text-[oklch(0.4_0.15_220)] text-[10px] font-semibold uppercase tracking-wide">
-                <Palmtree className="w-3 h-3" /> Holiday Mode Active
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+              className="text-muted-foreground hover:text-foreground p-2 rounded-lg active:scale-95"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
             <button
               onClick={toggleHolidayMode}
               className={`p-2 rounded-lg active:scale-95 transition-colors ${
@@ -360,14 +364,7 @@ function LogPage() {
               aria-label="Toggle holiday mode"
               aria-pressed={log.holiday_mode}
             >
-              <Palmtree className="w-4 h-4" />
-            </button>
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="text-muted-foreground hover:text-foreground p-2 rounded-lg active:scale-95"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
+              <Sun className="w-4 h-4" />
             </button>
           </div>
         </div>
