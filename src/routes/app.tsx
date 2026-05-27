@@ -423,6 +423,11 @@ function LogPage() {
 
             {log.flare_up && (
               <div className="mt-3 rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
+                {log.holiday_mode ? (
+                  <div className="rounded-xl bg-muted border border-dashed border-border px-3 py-2.5 text-[12px] text-muted-foreground">
+                    Holiday mode: flare-up is logged as all day (00:00 – 23:59).
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
@@ -455,6 +460,7 @@ function LogPage() {
                     </select>
                   </div>
                 </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
