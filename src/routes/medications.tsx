@@ -230,7 +230,12 @@ function MedicationsPage() {
                     onSync={syncScroll}
                   />
                 ) : (
-                  <DoseTrendChart days={days} doses={m.days} health={healthByDate} />
+                  <DoseTrendChart
+                    days={days}
+                    doses={m.days}
+                    health={healthByDate}
+                    flares={flareByDate}
+                  />
                 )}
               </div>
             ))}
