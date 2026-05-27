@@ -355,11 +355,7 @@ function LogPage() {
           {/* 2. Severity & alert flags */}
           <Section label="Flare-Up Alert">
             <button
-              onClick={() => {
-                const next = !log.flare_up;
-                update("flare_up", next);
-                updateFlare({ had_flareup: next });
-              }}
+              onClick={() => setFlareOn(!log.flare_up)}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
                 log.flare_up
                   ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
@@ -374,13 +370,7 @@ function LogPage() {
                   {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
                 </span>
               </div>
-              <Toggle
-                on={log.flare_up}
-                onChange={(v) => {
-                  update("flare_up", v);
-                  updateFlare({ had_flareup: v });
-                }}
-              />
+              <Toggle on={log.flare_up} onChange={setFlareOn} />
             </button>
 
             {log.flare_up && (
