@@ -302,7 +302,11 @@ function LogPage() {
           {/* 2. Severity & alert flags */}
           <Section label="Flare-Up Alert">
             <button
-              onClick={() => update("flare_up", !log.flare_up)}
+              onClick={() => {
+                const next = !log.flare_up;
+                update("flare_up", next);
+                updateFlare({ had_flareup: next });
+              }}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
                 log.flare_up
                   ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
@@ -317,8 +321,91 @@ function LogPage() {
                   {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
                 </span>
               </div>
-              <Toggle on={log.flare_up} onChange={(v) => update("flare_up", v)} />
+              <Toggle
+                on={log.flare_up}
+                onChange={(v) => {
+                  update("flare_up", v);
+                  updateFlare({ had_flareup: v });
+                }}
+              />
             </button>
+
+            {log.flare_up && (
+              <div className="mt-3 rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                      Start time
+                    </label>
+                    <input
+                      type="time"
+                      value={log.flare_event?.start_time ?? ""}
+                      onChange={(e) => updateFlare({ start_time: e.target.value || null })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                      Resolution time
+                    </label>
+                    <input
+                      type="time"
+                      value={log.flare_event?.end_time ?? ""}
+                      onChange={(e) => updateFlare({ end_time: e.target.value || null })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                    Flare symptoms
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {FLARE_SYMPTOM_OPTIONS.map((s) => {
+                      const active = (log.flare_event?.symptoms ?? []).includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleFlareSymptom(s)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
+                            active
+                              ? "bg-[oklch(0.58_0.20_25)] text-white border-[oklch(0.58_0.20_25)]"
+                              : "bg-card text-foreground border-border hover:border-[oklch(0.68_0.20_25)]/60"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                    Intervention applied
+                  </label>
+                  <select
+                    value={log.flare_event?.intervention_med ?? ""}
+                    onChange={(e) => updateFlare({ intervention_med: e.target.value || null })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    <option value="">No intervention</option>
+                    {Object.entries(log.medications)
+                      .filter(([, m]) => m.taken)
+                      .map(([name]) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                  </select>
+                  {Object.values(log.medications).filter((m) => m.taken).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      Log a medication below to link it as the intervention.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </Section>
 
           <Section label="Overall Health Score">
