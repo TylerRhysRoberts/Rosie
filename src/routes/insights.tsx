@@ -316,7 +316,7 @@ function InsightsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={walkTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
                     <defs>
-                      <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="healthGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
                         <stop offset="0%" stopColor="#22c55e" />
                         <stop offset="50%" stopColor="#eab308" />
                         <stop offset="100%" stopColor="#ef4444" />
