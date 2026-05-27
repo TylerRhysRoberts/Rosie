@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
-  deleteLogByDate,
+  deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, Trash2, X } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -179,108 +179,154 @@ function HistoryPage() {
 function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete: () => void }) {
   const meta = SCORE_META[log.health_score];
   const walks = totalWalkMinutes(log.walks);
-  const [dx, setDx] = useState(0);
-  const startX = useRef<number | null>(null);
-  const moved = useRef(false);
-  const ACTION_WIDTH = 80;
-  const FULL_SWIPE = 200;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    moved.current = false;
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (startX.current == null) return;
-    const delta = e.touches[0].clientX - startX.current;
-    if (Math.abs(delta) > 6) moved.current = true;
-    // Only allow swipe left (negative)
-    const next = Math.min(0, Math.max(-FULL_SWIPE - 20, delta + (dx < 0 && Math.abs(dx) >= ACTION_WIDTH ? -ACTION_WIDTH : 0)));
-    setDx(next);
-  };
-  const onTouchEnd = () => {
-    if (startX.current == null) return;
-    startX.current = null;
-    if (dx <= -FULL_SWIPE) {
-      setDx(0);
-      onRequestDelete();
-    } else if (dx <= -ACTION_WIDTH / 2) {
-      setDx(-ACTION_WIDTH);
-    } else {
-      setDx(0);
-    }
-  };
-  const onClickCapture = (e: React.MouseEvent) => {
-    if (moved.current || dx !== 0) {
-      e.preventDefault();
-      e.stopPropagation();
-      setDx(0);
-      moved.current = false;
-    }
-  };
+  const [expanded, setExpanded] = useState(false);
+  const realSymptoms = log.symptoms.filter((s) => s !== "No Issues");
+  const takenMeds = Object.entries(log.medications).filter(([, m]) => m.taken);
 
   return (
-    <li className="relative overflow-hidden rounded-2xl">
-      {/* Revealed delete action under the card */}
+    <li className="relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors">
       <button
         type="button"
-        onClick={onRequestDelete}
-        aria-label="Delete entry"
-        className="absolute inset-y-0 right-0 flex items-center justify-center gap-1.5 bg-[oklch(0.58_0.20_25)] text-white px-5 text-xs font-semibold"
-        style={{ width: ACTION_WIDTH }}
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
       >
-        <Trash2 className="w-4 h-4" />
-        Delete
+        <span
+          className="flex-shrink-0 w-3 h-12 rounded-full"
+          style={{ backgroundColor: meta.ring }}
+          aria-label={meta.label}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            {formatDate(log.log_date)}
+            {log.flare_up && (
+              <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.58_0.20_25)]" />
+            )}
+          </p>
+          <p className="text-[12px] text-muted-foreground truncate">
+            {meta.label}
+            {realSymptoms.length === 0
+              ? " · No Symptoms"
+              : ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`}
+            {walks > 0 && ` · ${walks}m walking`}
+            {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
+          </p>
+        </div>
+        <span className="text-2xl" aria-hidden>{meta.emoji}</span>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        )}
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRequestDelete(); }}
+          aria-label="Delete entry"
+          className="flex-shrink-0 -mr-1 p-1.5 rounded-full text-muted-foreground/60 hover:text-[oklch(0.58_0.20_25)] hover:bg-[oklch(0.94_0.05_25)] active:scale-90 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </button>
 
       <div
-        className="relative will-change-transform transition-transform duration-200 ease-out"
-        style={{ transform: `translateX(${dx}px)` }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchEnd}
+        className={`grid transition-all duration-200 ease-in-out ${
+          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
       >
-        <Link
-          to="/app"
-          search={{ date: log.log_date }}
-          onClickCapture={onClickCapture}
-          className="flex items-center gap-3 rounded-2xl bg-card border border-border px-4 py-3.5 hover:border-primary/30 transition-colors"
-        >
-          <span
-            className="flex-shrink-0 w-3 h-12 rounded-full"
-            style={{ backgroundColor: meta.ring }}
-            aria-label={meta.label}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              {formatDate(log.log_date)}
-              {log.flare_up && (
-                <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.58_0.20_25)]" />
+        <div className="overflow-hidden">
+          <div className="px-4 pb-4 pt-1 border-t border-border/60 space-y-3">
+            {log.flare_up && (
+              <DetailRow label="Flare-up">
+                <span className="inline-flex items-center gap-1.5 text-[12px] text-[oklch(0.58_0.20_25)] font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {log.flare_event?.start_time || log.flare_event?.end_time
+                    ? `Flare: ${log.flare_event?.start_time ?? "—"} – ${log.flare_event?.end_time ?? "—"}`
+                    : "Flare-up day"}
+                </span>
+              </DetailRow>
+            )}
+
+            <DetailRow label="Symptoms">
+              {realSymptoms.length === 0 ? (
+                <span className="text-[12px] text-muted-foreground">No symptoms</span>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {realSymptoms.map((s) => (
+                    <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground">{s}</span>
+                  ))}
+                </div>
               )}
-            </p>
-            <p className="text-[12px] text-muted-foreground truncate">
-              {meta.label}
-              {(() => {
-                const realSymptoms = log.symptoms.filter((s) => s !== "No Issues");
-                if (realSymptoms.length === 0) return " · No Symptoms";
-                return ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`;
-              })()}
-              {walks > 0 && ` · ${walks}m walking`}
-              {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
-            </p>
+            </DetailRow>
+
+            <DetailRow label="Diet & Treats">
+              <span className="text-[12px] text-foreground">
+                Dins: {log.dins_percent}% · Treats: {log.treats.length > 0 ? log.treats.join(", ") : "None"} · Scavenges: {log.scavenged.length > 0 ? log.scavenged.join(", ") : "None"}
+              </span>
+            </DetailRow>
+
+            <DetailRow label="Medications">
+              {takenMeds.length === 0 ? (
+                <span className="text-[12px] text-muted-foreground">None</span>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {takenMeds.map(([name, m]) => (
+                    <span
+                      key={name}
+                      className={
+                        m.is_rescue
+                          ? "text-[11px] px-2 py-0.5 rounded-full font-semibold text-white"
+                          : "text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground"
+                      }
+                      style={
+                        m.is_rescue
+                          ? {
+                              backgroundImage:
+                                "repeating-linear-gradient(45deg, oklch(0.58 0.20 25), oklch(0.58 0.20 25) 6px, oklch(0.52 0.20 25) 6px, oklch(0.52 0.20 25) 12px)",
+                            }
+                          : undefined
+                      }
+                    >
+                      {name} ({DOSAGE_LABELS[m.dosage]}){m.is_rescue && " · Rescue"}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </DetailRow>
+
+            <DetailRow label="Activity & Place">
+              <span className="text-[12px] text-foreground">
+                Walk: {walks > 0 ? `${walks} mins` : "None"} · Location: {log.location ?? "—"}
+              </span>
+            </DetailRow>
+
+            {log.notes && (
+              <blockquote className="text-[12px] italic text-foreground/90 border-l-2 border-primary/40 pl-3 py-1 whitespace-pre-wrap">
+                {log.notes}
+              </blockquote>
+            )}
+
+            <div className="flex justify-end pt-1">
+              <Link
+                to="/app"
+                search={{ date: log.log_date }}
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
+              >
+                Edit Full Entry <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
-          <span className="text-2xl" aria-hidden>{meta.emoji}</span>
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRequestDelete(); }}
-            aria-label="Delete entry"
-            className="flex-shrink-0 -mr-1 p-1.5 rounded-full text-muted-foreground/60 hover:text-[oklch(0.58_0.20_25)] hover:bg-[oklch(0.94_0.05_25)] active:scale-90 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </Link>
+        </div>
       </div>
     </li>
+  );
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[88px_1fr] gap-2 items-start">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pt-0.5">{label}</span>
+      <div className="min-w-0">{children}</div>
+    </div>
   );
 }
 
