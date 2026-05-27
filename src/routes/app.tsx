@@ -470,7 +470,7 @@ function LogPage() {
                   <button
                     key={opt.value}
                     onClick={() => update("stool_consistency", active ? null : (opt.value as StoolConsistency))}
-                    className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all active:scale-95 ${
+                    className={`min-h-[48px] px-2 py-1 rounded-xl text-xs font-medium border transition-all active:scale-95 flex items-center justify-center text-center ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-card text-foreground border-border hover:border-primary/40"
@@ -491,7 +491,7 @@ function LogPage() {
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all active:scale-95 ${
+                    className={`min-h-[48px] px-2 py-1 rounded-xl text-xs font-medium border transition-all active:scale-95 flex items-center justify-center text-center ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-card text-foreground border-border hover:border-primary/40"
@@ -507,7 +507,7 @@ function LogPage() {
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className="py-2.5 px-2 rounded-xl text-xs font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center justify-center gap-1"
+                    className="min-h-[48px] px-2 py-1 rounded-xl text-xs font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center justify-center text-center gap-1"
                   >
                     {s} <X className="w-3 h-3 opacity-70" />
                   </button>
