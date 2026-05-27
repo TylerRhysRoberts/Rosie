@@ -116,13 +116,43 @@ function LogPage() {
   };
 
   const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
-    setLog((prev) => ({
-      ...prev,
-      medications: {
+    setLog((prev) => {
+      const nextMeds = {
         ...prev.medications,
         [name]: { ...prev.medications[name], ...partial } as any,
-      },
-    }));
+      };
+      // If taken is being unset, also clear rescue flag.
+      if (partial.taken === false) {
+        nextMeds[name] = { ...nextMeds[name], is_rescue: false };
+      }
+      const prevRescueCount = Object.values(prev.medications).filter(
+        (m) => m.taken && m.is_rescue,
+      ).length;
+      const rescueNames = Object.entries(nextMeds)
+        .filter(([, m]: [string, any]) => m.taken && m.is_rescue)
+        .map(([n]) => n);
+      const anyRescue = rescueNames.length > 0;
+      const prevFlare = prev.flare_event ?? EMPTY_FLARE_EVENT;
+
+      let flare_up = prev.flare_up;
+      let flare_event = prevFlare;
+
+      if (anyRescue) {
+        // Activating any rescue dose → ensure flare is ON and intervention reflects all rescues.
+        flare_up = true;
+        flare_event = {
+          ...prevFlare,
+          had_flareup: true,
+          intervention_med: rescueNames.join(", "),
+        };
+      } else if (prevRescueCount > 0) {
+        // Last rescue dose just removed → clear flare entirely.
+        flare_up = false;
+        flare_event = { ...EMPTY_FLARE_EVENT };
+      }
+
+      return { ...prev, medications: nextMeds, flare_up, flare_event };
+    });
   };
 
   const addCustomMed = () => {
@@ -161,6 +191,29 @@ function LogPage() {
           ...fe,
           symptoms: has ? fe.symptoms.filter((x) => x !== s) : [...fe.symptoms, s],
         },
+      };
+    });
+  };
+
+  // Toggle the flare flag, keeping medications in sync.
+  // Turning flare OFF clears all rescue-dose flags (a rescue only exists in response to a flare).
+  const setFlareOn = (next: boolean) => {
+    setLog((prev) => {
+      if (next) {
+        return {
+          ...prev,
+          flare_up: true,
+          flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), had_flareup: true },
+        };
+      }
+      const clearedMeds = Object.fromEntries(
+        Object.entries(prev.medications).map(([n, m]) => [n, { ...m, is_rescue: false }]),
+      );
+      return {
+        ...prev,
+        flare_up: false,
+        flare_event: { ...EMPTY_FLARE_EVENT },
+        medications: clearedMeds as typeof prev.medications,
       };
     });
   };
@@ -302,11 +355,7 @@ function LogPage() {
           {/* 2. Severity & alert flags */}
           <Section label="Flare-Up Alert">
             <button
-              onClick={() => {
-                const next = !log.flare_up;
-                update("flare_up", next);
-                updateFlare({ had_flareup: next });
-              }}
+              onClick={() => setFlareOn(!log.flare_up)}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
                 log.flare_up
                   ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
@@ -321,13 +370,7 @@ function LogPage() {
                   {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
                 </span>
               </div>
-              <Toggle
-                on={log.flare_up}
-                onChange={(v) => {
-                  update("flare_up", v);
-                  updateFlare({ had_flareup: v });
-                }}
-              />
+              <Toggle on={log.flare_up} onChange={setFlareOn} />
             </button>
 
             {log.flare_up && (
@@ -386,23 +429,30 @@ function LogPage() {
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
                     Intervention applied
                   </label>
-                  <select
-                    value={log.flare_event?.intervention_med ?? ""}
-                    onChange={(e) => updateFlare({ intervention_med: e.target.value || null })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="">No intervention</option>
-                    {Object.entries(log.medications)
-                      .filter(([, m]) => m.taken)
-                      .map(([name]) => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                  </select>
-                  {Object.values(log.medications).filter((m) => m.taken).length === 0 && (
-                    <p className="text-[11px] text-muted-foreground mt-1.5">
-                      Log a medication below to link it as the intervention.
-                    </p>
-                  )}
+                  {(() => {
+                    const rescueMeds = Object.entries(log.medications)
+                      .filter(([, m]) => m.taken && m.is_rescue)
+                      .map(([n]) => n);
+                    if (rescueMeds.length === 0) {
+                      return (
+                        <div className="px-3 py-2.5 rounded-xl bg-muted border border-dashed border-border text-[12px] text-muted-foreground">
+                          Tick <span className="font-semibold">Rescue dose</span> on a medication below — all rescue meds will be auto-listed as interventions.
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex flex-wrap gap-1.5 px-3 py-2.5 rounded-xl bg-muted border border-border">
+                        {rescueMeds.map((n) => (
+                          <span
+                            key={n}
+                            className="px-2.5 py-1 rounded-full bg-[oklch(0.58_0.20_25)] text-white text-xs font-semibold"
+                          >
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
