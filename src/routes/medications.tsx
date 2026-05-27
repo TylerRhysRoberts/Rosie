@@ -71,6 +71,15 @@ function MedicationsPage() {
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
   const trackRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  const syncScroll = (source: HTMLDivElement) => {
+    const left = source.scrollLeft;
+    Object.values(trackRefs.current).forEach((el) => {
+      if (el && el !== source && el.scrollLeft !== left) {
+        el.scrollLeft = left;
+      }
+    });
+  };
+
   useEffect(() => {
     if (isLoading) return;
     if (!user) { navigate({ to: "/login" }); return; }
@@ -197,6 +206,7 @@ function MedicationsPage() {
                     trackRef={(el) => {
                       trackRefs.current[m.name] = el;
                     }}
+                    onSync={syncScroll}
                   />
                 ) : (
                   <DoseTrendChart days={days} doses={m.days} />
