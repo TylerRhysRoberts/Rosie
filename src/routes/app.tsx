@@ -376,13 +376,16 @@ function LogPage() {
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
                       Start time
                     </label>
-                    <input
-                      type="time"
-                      step={900}
+                    <select
                       value={log.flare_event?.start_time ?? ""}
                       onChange={(e) => updateFlare({ start_time: e.target.value || null })}
                       className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    />
+                    >
+                      <option value="">--:--</option>
+                      {TIME_OPTIONS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
