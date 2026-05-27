@@ -314,7 +314,7 @@ function InsightsPage() {
               </h2>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={walkTrend} margin={{ top: 10, right: 45, bottom: 0, left: 5 }}>
+                  <LineChart data={walkTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
                     <defs>
                       <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#22c55e" />
@@ -338,8 +338,8 @@ function InsightsPage() {
                       ticks={[1, 2, 3]}
                       tickFormatter={(val) => val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""}
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      width={60}
-                      tickMargin={12}
+                      width={45}
+                      tickMargin={4}
                     />
                     <Tooltip
                       contentStyle={{
