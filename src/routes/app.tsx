@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Palmtree } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
