@@ -220,10 +220,42 @@ function CapsuleTrack({
   doses: Record<string, DosageSize>;
   trackRef: (el: HTMLDivElement | null) => void;
 }) {
+  const localRef = useRef<HTMLDivElement | null>(null);
+  const dragState = useRef<{ active: boolean; startX: number; startScroll: number }>({
+    active: false,
+    startX: 0,
+    startScroll: 0,
+  });
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!localRef.current) return;
+    dragState.current = {
+      active: true,
+      startX: e.pageX,
+      startScroll: localRef.current.scrollLeft,
+    };
+  };
+  const endDrag = () => {
+    dragState.current.active = false;
+  };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!dragState.current.active || !localRef.current) return;
+    e.preventDefault();
+    const walk = e.pageX - dragState.current.startX;
+    localRef.current.scrollLeft = dragState.current.startScroll - walk;
+  };
+
   return (
     <div
-      ref={trackRef}
-      className="flex flex-row overflow-x-auto gap-3 pb-2 touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      ref={(el) => {
+        localRef.current = el;
+        trackRef(el);
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseLeave={endDrag}
+      onMouseUp={endDrag}
+      onMouseMove={handleMouseMove}
+      className="flex flex-row overflow-x-auto gap-4 pb-2 w-full touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {days.map((d) => {
         const dose = doses[d];
@@ -232,10 +264,13 @@ function CapsuleTrack({
         const [, mm, dd] = d.split("-");
         const stamp = `${parseInt(dd, 10)}/${parseInt(mm, 10)}`;
         return (
-          <div key={d} className="flex flex-col items-center shrink-0">
+          <div
+            key={d}
+            className="flex flex-col items-center shrink-0 w-[calc((100%-6rem)/7)]"
+          >
             <div
               title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
-              className="relative h-20 w-7 rounded-full overflow-hidden bg-muted/60 border border-border"
+              className="relative h-20 w-full rounded-full overflow-hidden bg-muted/60 border border-border select-none"
             >
               {taken && (
                 <div
