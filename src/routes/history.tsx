@@ -259,9 +259,11 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
             </DetailRow>
 
             <DetailRow label="Diet & Treats">
-              <span className="text-[12px] text-foreground">
-                Dins: {log.dins_percent}% · Treats: {log.treats.length > 0 ? log.treats.join(", ") : "None"} · Scavenges: {log.scavenged.length > 0 ? log.scavenged.join(", ") : "None"}
-              </span>
+              <div className="flex flex-col gap-0.5 text-[12px] text-foreground">
+                <span>Dins: {log.dins_percent}%</span>
+                <span>Treats: {log.treats.length > 0 ? log.treats.join(", ") : "None"}</span>
+                <span>Scavenges: {log.scavenged.length > 0 ? log.scavenged.join(", ") : "None"}</span>
+              </div>
             </DetailRow>
 
             <DetailRow label="Medications">
