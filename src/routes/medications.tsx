@@ -19,6 +19,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceArea,
 } from "recharts";
 
 export const Route = createFileRoute("/medications")({
@@ -144,6 +145,14 @@ function MedicationsPage() {
     return map;
   }, [logs, daySet]);
 
+  const holidayByDate = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const log of logs) {
+      if (daySet.has(log.log_date) && log.holiday_mode) map[log.log_date] = true;
+    }
+    return map;
+  }, [logs, daySet]);
+
   useEffect(() => {
     if (rangeDays !== 7) return;
     // Pin to far right (Today) on render / range change.
@@ -222,6 +231,7 @@ function MedicationsPage() {
                   <CapsuleTrack
                     days={days}
                     doses={m.days}
+                    holidays={holidayByDate}
                     trackRef={(el) => {
                       trackRefs.current[m.name] = el;
                     }}
@@ -233,6 +243,7 @@ function MedicationsPage() {
                     doses={m.days}
                     health={healthByDate}
                     flares={flareByDate}
+                    holidays={holidayByDate}
                   />
                 )}
               </div>
