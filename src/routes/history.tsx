@@ -341,13 +341,13 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function FilterToggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+function FilterToggle({ on, onClick, children, activeClass }: { on: boolean; onClick: () => void; children: React.ReactNode; activeClass?: string }) {
   return (
     <button
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
         on
-          ? "bg-primary text-primary-foreground border-primary"
+          ? (activeClass ?? "bg-primary text-primary-foreground border-primary")
           : "bg-card text-foreground border-border hover:border-primary/40"
       }`}
     >
