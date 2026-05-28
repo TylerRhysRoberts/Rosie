@@ -516,7 +516,6 @@ function EmptyState() {
 }
 
 function WalkTooltip({ active, payload, label }: any) {
-  // placeholder
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload ?? {};
   const hs = p.healthScore;
