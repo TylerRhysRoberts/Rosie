@@ -193,7 +193,13 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
   const takenMeds = Object.entries(log.medications).filter(([, m]) => m.taken);
 
   return (
-    <li className="relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors">
+    <li
+      className={`relative overflow-hidden rounded-2xl bg-card border transition-colors ${
+        log.holiday_mode
+          ? "border-[oklch(0.78_0.08_230)] hover:border-[oklch(0.68_0.12_230)]"
+          : "border-border hover:border-primary/30"
+      }`}
+    >
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -208,6 +214,9 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
             {formatDate(log.log_date)}
+            {log.holiday_mode && (
+              <Sun className="w-3.5 h-3.5 text-[oklch(0.62_0.14_230)]" />
+            )}
             {log.flare_up && (
               <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.58_0.20_25)]" />
             )}
@@ -217,7 +226,7 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
             {realSymptoms.length === 0
               ? " · No Symptoms"
               : ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`}
-            {walks > 0 && ` · ${walks}m walking`}
+            {walks > 0 && ` · ${walks}m 🚶‍♂️`}
             {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
           </p>
         </div>
