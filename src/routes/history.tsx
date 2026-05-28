@@ -196,7 +196,7 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
     <li
       className={`relative overflow-hidden rounded-2xl bg-card border transition-colors ${
         log.holiday_mode
-          ? "border-[oklch(0.78_0.08_230)] hover:border-[oklch(0.68_0.12_230)]"
+          ? "!bg-[oklch(0.97_0.025_230)] border-[oklch(0.78_0.08_230)] hover:border-[oklch(0.68_0.12_230)]"
           : "border-border hover:border-primary/30"
       }`}
     >
