@@ -6,7 +6,7 @@ import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
   deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -32,6 +32,7 @@ function HistoryPage() {
   const [query, setQuery] = useState("");
   const [onlyPoor, setOnlyPoor] = useState(false);
   const [onlyFlare, setOnlyFlare] = useState(false);
+  const [onlyHoliday, setOnlyHoliday] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -46,10 +47,11 @@ function HistoryPage() {
     return logs.filter((l) => {
       if (onlyPoor && l.health_score !== 1) return false;
       if (onlyFlare && !l.flare_up) return false;
+      if (onlyHoliday && !l.holiday_mode) return false;
       if (q && !(l.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [logs, query, onlyPoor, onlyFlare]);
+  }, [logs, query, onlyPoor, onlyFlare, onlyHoliday]);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -121,6 +123,13 @@ function HistoryPage() {
             <FilterToggle on={onlyFlare} onClick={() => setOnlyFlare((v) => !v)}>
               <AlertTriangle className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
               Flare-ups
+            </FilterToggle>
+            <FilterToggle
+              on={onlyHoliday}
+              onClick={() => setOnlyHoliday((v) => !v)}
+              activeClass="bg-[oklch(0.92_0.05_230)] text-[oklch(0.35_0.10_230)] border-[oklch(0.78_0.08_230)]"
+            >
+              🏖 Holiday
             </FilterToggle>
           </div>
         </div>
