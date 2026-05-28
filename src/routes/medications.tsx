@@ -378,7 +378,16 @@ function DoseTrendChart({
 
   const data = isWeekly
     ? (() => {
-        const buckets: typeof dailyData = [];
+        const buckets: Array<{
+          date: string;
+          label: string;
+          dose: number;
+          routineDose: number | null;
+          rescueDose: number | null;
+          rescueLabel: string | null;
+          healthScore: number | null;
+          flare: FlareEvent | null;
+        }> = [];
         const weekCount = Math.ceil(days.length / 7);
         for (let w = 0; w < weekCount; w++) {
           const slice = days.slice(w * 7, w * 7 + 7);
