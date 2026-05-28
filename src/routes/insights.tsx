@@ -115,21 +115,10 @@ function InsightsPage() {
   }));
   const stoolTotal = stoolCounts.reduce((s, x) => s + x.count, 0);
 
-  // Build chronological trend data (one point per day in range, gaps interpolated as null)
+  // Build chronological trend data
+  // 7/30 days → one point per day. 90 days → aggregate into ~13 rolling 7-day buckets.
+  const isWeekly = rangeDays === 90;
   const trend: { date: string; label: string; score: number | null }[] = [];
-  for (let i = rangeDays - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split("T")[0];
-    const match = ranged.find((l) => l.log_date === key);
-    trend.push({
-      date: key,
-      label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
-      score: match ? match.health_score : null,
-    });
-  }
-
-  // Build chronological walk-duration data (one point per day in range)
   const walkTrend: {
     date: string;
     label: string;
@@ -138,24 +127,60 @@ function InsightsPage() {
     flare: DailyLog["flare_event"] | null;
     rescueMeds: string[];
   }[] = [];
-  for (let i = rangeDays - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split("T")[0];
-    const match = ranged.find((l) => l.log_date === key);
-    const rescueMeds = match
-      ? Object.entries(match.medications)
-          .filter(([, m]) => m.taken && m.is_rescue)
-          .map(([n, m]) => `${n} (${m.dosage})`)
-      : [];
-    walkTrend.push({
-      date: key,
-      label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
-      minutes: match ? totalWalkMinutes(match.walks) : null,
-      healthScore: match ? match.health_score : null,
-      flare: match?.flare_event?.had_flareup ? match.flare_event : null,
-      rescueMeds,
-    });
+
+  if (!isWeekly) {
+    for (let i = rangeDays - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const match = ranged.find((l) => l.log_date === key);
+      const rescueMeds = match
+        ? Object.entries(match.medications)
+            .filter(([, m]) => m.taken && m.is_rescue)
+            .map(([n, m]) => `${n} (${m.dosage})`)
+        : [];
+      const label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      trend.push({ date: key, label, score: match ? match.health_score : null });
+      walkTrend.push({
+        date: key,
+        label,
+        minutes: match ? totalWalkMinutes(match.walks) : null,
+        healthScore: match ? match.health_score : null,
+        flare: match?.flare_event?.had_flareup ? match.flare_event : null,
+        rescueMeds,
+      });
+    }
+  } else {
+    const bucketCount = Math.ceil(rangeDays / 7); // ~13
+    for (let b = bucketCount - 1; b >= 0; b--) {
+      // Bucket spans 7 days ending at (today - b*7)
+      const end = new Date();
+      end.setDate(end.getDate() - b * 7);
+      const start = new Date(end);
+      start.setDate(start.getDate() - 6);
+      const startKey = start.toISOString().split("T")[0];
+      const endKey = end.toISOString().split("T")[0];
+      const bucketLogs = ranged.filter(
+        (l) => l.log_date >= startKey && l.log_date <= endKey
+      );
+      const scores = bucketLogs.map((l) => l.health_score);
+      const mins = bucketLogs.map((l) => totalWalkMinutes(l.walks));
+      const avgS =
+        scores.length > 0 ? scores.reduce((s, v) => s + v, 0) / scores.length : null;
+      const avgM =
+        mins.length > 0 ? Math.round(mins.reduce((s, v) => s + v, 0) / mins.length) : null;
+      const weekNum = bucketCount - b;
+      const label = `Wk ${weekNum}`;
+      trend.push({ date: startKey, label, score: avgS });
+      walkTrend.push({
+        date: startKey,
+        label,
+        minutes: avgM,
+        healthScore: avgS,
+        flare: null,
+        rescueMeds: [],
+      });
+    }
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
 
@@ -420,10 +445,9 @@ function InsightsPage() {
                       orientation="right"
                       domain={[0.5, 3.5]}
                       ticks={[1, 2, 3]}
-                      tickFormatter={(val) => val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""}
-                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      width={45}
-                      tickMargin={4}
+                      tick={<HealthDotTick />}
+                      width={18}
+                      tickMargin={2}
                     />
                     <Tooltip
                       contentStyle={{
