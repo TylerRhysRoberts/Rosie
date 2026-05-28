@@ -264,11 +264,13 @@ const RESCUE_STRIPE =
 function CapsuleTrack({
   days,
   doses,
+  holidays,
   trackRef,
   onSync,
 }: {
   days: string[];
   doses: Record<string, DoseEntry>;
+  holidays: Record<string, boolean>;
   trackRef: (el: HTMLDivElement | null) => void;
   onSync?: (source: HTMLDivElement) => void;
 }) {
@@ -316,6 +318,7 @@ function CapsuleTrack({
         const taken = !!entry;
         const dosage = entry?.dosage;
         const isRescue = !!entry?.is_rescue;
+        const isHoliday = !!holidays[d];
         const pct = taken ? DOSAGE_FILL_PCT[dosage!] : 0;
         const [, mm, dd] = d.split("-");
         const stamp = `${parseInt(dd, 10)}/${parseInt(mm, 10)}`;
@@ -327,12 +330,22 @@ function CapsuleTrack({
             <div
               title={`${d}${dosage ? ` · ${DOSAGE_LABELS[dosage]}${isRescue ? " (Rescue)" : ""}` : ""}`}
               className={`relative h-20 w-full rounded-full overflow-hidden bg-muted/60 select-none ${
-                isRescue ? "border-2 border-[oklch(0.58_0.20_25)]" : "border border-border"
+                isRescue
+                  ? "border-2 border-[oklch(0.58_0.20_25)]"
+                  : isHoliday
+                  ? "border-2 border-[oklch(0.78_0.10_230)]"
+                  : "border border-border"
               }`}
             >
               {taken && (
                 <div
-                  className={!isRescue ? "absolute inset-x-0 bottom-0 bg-primary" : "absolute inset-x-0 bottom-0"}
+                  className={
+                    isRescue
+                      ? "absolute inset-x-0 bottom-0"
+                      : isHoliday
+                      ? "absolute inset-x-0 bottom-0 bg-[oklch(0.82_0.08_230)]"
+                      : "absolute inset-x-0 bottom-0 bg-primary"
+                  }
                   style={{
                     height: `${pct}%`,
                     ...(isRescue ? { background: RESCUE_STRIPE } : {}),
@@ -363,11 +376,13 @@ function DoseTrendChart({
   doses,
   health,
   flares,
+  holidays,
 }: {
   days: string[];
   doses: Record<string, DoseEntry>;
   health: Record<string, number>;
   flares: Record<string, FlareEvent>;
+  holidays: Record<string, boolean>;
 }) {
   const isWeekly = days.length >= 90;
   const dailyData = days.map((d) => {
@@ -384,6 +399,7 @@ function DoseTrendChart({
       rescueLabel: isRescue && dose ? DOSAGE_LABELS[dose] : null,
       healthScore: health[d] ?? null,
       flare: flares[d] ?? null,
+      holiday: !!holidays[d],
     };
   });
 
@@ -398,6 +414,7 @@ function DoseTrendChart({
           rescueLabel: string | null;
           healthScore: number | null;
           flare: FlareEvent | null;
+          holiday: boolean;
         }> = [];
         const weekCount = Math.ceil(days.length / 7);
         for (let w = 0; w < weekCount; w++) {
@@ -407,6 +424,7 @@ function DoseTrendChart({
           let healthSum = 0, healthN = 0;
           let lastRescueLabel: string | null = null;
           let firstFlare: FlareEvent | null = null;
+          let anyHoliday = false;
           for (const d of slice) {
             const entry = doses[d];
             if (entry) {
@@ -421,6 +439,7 @@ function DoseTrendChart({
             const h = health[d];
             if (h != null) { healthSum += h; healthN += 1; }
             if (!firstFlare && flares[d]) firstFlare = flares[d];
+            if (holidays[d]) anyHoliday = true;
           }
           buckets.push({
             date: slice[0],
@@ -431,11 +450,13 @@ function DoseTrendChart({
             rescueLabel: lastRescueLabel,
             healthScore: healthN > 0 ? healthSum / healthN : null,
             flare: firstFlare,
+            holiday: anyHoliday,
           });
         }
         return buckets;
       })()
     : dailyData;
+  const holidaySegments = computeHolidaySegments(data);
   return (
     <div className="h-32 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -448,6 +469,16 @@ function DoseTrendChart({
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+          {holidaySegments.map((seg, i) => (
+            <ReferenceArea
+              key={`hol-${i}`}
+              x1={data[seg.start].label}
+              x2={data[Math.min(data.length - 1, seg.end + 1)].label}
+              fill="rgba(14, 165, 233, 0.10)"
+              stroke="none"
+              ifOverflow="extendDomain"
+            />
+          ))}
           <XAxis
             dataKey="label"
             tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
