@@ -358,7 +358,8 @@ function DoseTrendChart({
   health: Record<string, number>;
   flares: Record<string, FlareEvent>;
 }) {
-  const data = days.map((d) => {
+  const isWeekly = days.length >= 90;
+  const dailyData = days.map((d) => {
     const entry = doses[d];
     const dose = entry?.dosage;
     const value = entry ? DOSAGE_DECIMAL[entry.dosage] : 0;
@@ -374,6 +375,56 @@ function DoseTrendChart({
       flare: flares[d] ?? null,
     };
   });
+
+  const data = isWeekly
+    ? (() => {
+        const buckets: Array<{
+          date: string;
+          label: string;
+          dose: number;
+          routineDose: number | null;
+          rescueDose: number | null;
+          rescueLabel: string | null;
+          healthScore: number | null;
+          flare: FlareEvent | null;
+        }> = [];
+        const weekCount = Math.ceil(days.length / 7);
+        for (let w = 0; w < weekCount; w++) {
+          const slice = days.slice(w * 7, w * 7 + 7);
+          let routineSum = 0, routineN = 0;
+          let rescueSum = 0, rescueN = 0;
+          let healthSum = 0, healthN = 0;
+          let lastRescueLabel: string | null = null;
+          let firstFlare: FlareEvent | null = null;
+          for (const d of slice) {
+            const entry = doses[d];
+            if (entry) {
+              const v = DOSAGE_DECIMAL[entry.dosage];
+              if (entry.is_rescue) {
+                rescueSum += v; rescueN += 1;
+                lastRescueLabel = DOSAGE_LABELS[entry.dosage];
+              } else {
+                routineSum += v; routineN += 1;
+              }
+            }
+            const h = health[d];
+            if (h != null) { healthSum += h; healthN += 1; }
+            if (!firstFlare && flares[d]) firstFlare = flares[d];
+          }
+          buckets.push({
+            date: slice[0],
+            label: `Wk ${w + 1}`,
+            dose: 0,
+            routineDose: routineN > 0 ? routineSum / routineN : null,
+            rescueDose: rescueN > 0 ? rescueSum / rescueN : null,
+            rescueLabel: lastRescueLabel,
+            healthScore: healthN > 0 ? healthSum / healthN : null,
+            flare: firstFlare,
+          });
+        }
+        return buckets;
+      })()
+    : dailyData;
   return (
     <div className="h-32 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -406,12 +457,9 @@ function DoseTrendChart({
             orientation="right"
             domain={[0.5, 3.5]}
             ticks={[1, 2, 3]}
-            tickFormatter={(val) =>
-              val === 1 ? "Poor" : val === 2 ? "Neutral" : val === 3 ? "Good" : ""
-            }
-            tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
-            width={45}
-            tickMargin={4}
+            tick={<HealthDotTick />}
+            width={18}
+            tickMargin={2}
           />
           <Tooltip
             contentStyle={{
@@ -469,6 +517,13 @@ function DoseTrendChart({
       </ResponsiveContainer>
     </div>
   );
+}
+
+function HealthDotTick(props: any) {
+  const { x, y, payload } = props;
+  const v = payload?.value;
+  const color = v === 3 ? "#22c55e" : v === 2 ? "#eab308" : v === 1 ? "#ef4444" : "transparent";
+  return <circle cx={(x ?? 0) + 6} cy={y ?? 0} r={4} fill={color} />;
 }
 
 function DoseTooltip({ active, payload, label }: any) {
