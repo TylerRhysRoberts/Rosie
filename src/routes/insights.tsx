@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   ReferenceLine,
+  ReferenceArea,
 } from "recharts";
 
 export const Route = createFileRoute("/insights")({
@@ -118,7 +119,7 @@ function InsightsPage() {
   // Build chronological trend data
   // 7/30 days → one point per day. 90 days → aggregate into ~13 rolling 7-day buckets.
   const isWeekly = rangeDays === 90;
-  const trend: { date: string; label: string; score: number | null }[] = [];
+  const trend: { date: string; label: string; score: number | null; holiday: boolean }[] = [];
   const walkTrend: {
     date: string;
     label: string;
@@ -126,6 +127,7 @@ function InsightsPage() {
     healthScore: number | null;
     flare: DailyLog["flare_event"] | null;
     rescueMeds: string[];
+    holiday: boolean;
   }[] = [];
 
   if (!isWeekly) {
@@ -140,7 +142,8 @@ function InsightsPage() {
             .map(([n, m]) => `${n} (${m.dosage})`)
         : [];
       const label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-      trend.push({ date: key, label, score: match ? match.health_score : null });
+      const holiday = !!match?.holiday_mode;
+      trend.push({ date: key, label, score: match ? match.health_score : null, holiday });
       walkTrend.push({
         date: key,
         label,
@@ -148,6 +151,7 @@ function InsightsPage() {
         healthScore: match ? match.health_score : null,
         flare: match?.flare_event?.had_flareup ? match.flare_event : null,
         rescueMeds,
+        holiday,
       });
     }
   } else {
@@ -171,7 +175,8 @@ function InsightsPage() {
         mins.length > 0 ? Math.round(mins.reduce((s, v) => s + v, 0) / mins.length) : null;
       const weekNum = bucketCount - b;
       const label = `Wk ${weekNum}`;
-      trend.push({ date: startKey, label, score: avgS });
+      const holiday = bucketLogs.some((l) => l.holiday_mode);
+      trend.push({ date: startKey, label, score: avgS, holiday });
       walkTrend.push({
         date: startKey,
         label,
@@ -179,10 +184,14 @@ function InsightsPage() {
         healthScore: avgS,
         flare: null,
         rescueMeds: [],
+        holiday,
       });
     }
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
+  const showHolidayOverlay = rangeDays !== 7;
+  const trendHolidaySegments = showHolidayOverlay ? computeHolidaySegments(trend) : [];
+  const walkHolidaySegments = showHolidayOverlay ? computeHolidaySegments(walkTrend) : [];
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -381,6 +390,16 @@ function InsightsPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    {trendHolidaySegments.map((seg, i) => (
+                      <ReferenceArea
+                        key={`hol-trend-${i}`}
+                        x1={trend[seg.start].label}
+                        x2={trend[Math.min(trend.length - 1, seg.end + 1)].label}
+                        fill="rgba(14, 165, 233, 0.10)"
+                        stroke="none"
+                        ifOverflow="extendDomain"
+                      />
+                    ))}
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
@@ -432,6 +451,16 @@ function InsightsPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    {walkHolidaySegments.map((seg, i) => (
+                      <ReferenceArea
+                        key={`hol-walk-${i}`}
+                        x1={walkTrend[seg.start].label}
+                        x2={walkTrend[Math.min(walkTrend.length - 1, seg.end + 1)].label}
+                        fill="rgba(14, 165, 233, 0.10)"
+                        stroke="none"
+                        ifOverflow="extendDomain"
+                      />
+                    ))}
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
