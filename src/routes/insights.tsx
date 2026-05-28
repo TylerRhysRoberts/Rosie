@@ -9,6 +9,7 @@ import {
   STOOL_OPTIONS,
   HealthScore,
 } from "@/lib/daily-logs";
+import { SYMPTOM_OPTIONS } from "@/lib/daily-logs";
 import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -64,6 +65,31 @@ function InsightsPage() {
   const targetDays = ranged.filter((l) => totalWalkMinutes(l.walks) >= WALK_TARGET).length;
 
   const flareUps = ranged.filter((l) => l.flare_up).length;
+
+  // Average flare-up duration in minutes
+  const flareDurations = ranged
+    .filter((l) => l.flare_up && l.flare_event?.start_time && l.flare_event?.end_time)
+    .map((l) => {
+      const [sh, sm] = l.flare_event!.start_time!.split(":").map(Number);
+      const [eh, em] = l.flare_event!.end_time!.split(":").map(Number);
+      const start = sh * 60 + sm;
+      let end = eh * 60 + em;
+      if (end < start) end += 24 * 60;
+      return end - start;
+    });
+  const avgFlareDuration =
+    flareDurations.length > 0
+      ? Math.round(flareDurations.reduce((s, d) => s + d, 0) / flareDurations.length)
+      : null;
+
+  // Symptom frequency across range
+  const symptomCounts = SYMPTOM_OPTIONS
+    .filter((s) => s !== "No Issues")
+    .map((sym) => ({
+      label: sym,
+      count: ranged.filter((l) => l.symptoms.includes(sym)).length,
+    }));
+  const symptomDenominator = ranged.length;
   // Current flare-free streak (within range): consecutive most-recent days without flare-up
   const sortedDesc = [...ranged].sort((a, b) => (a.log_date < b.log_date ? 1 : -1));
   let streak = 0;
@@ -202,6 +228,12 @@ function InsightsPage() {
                   </p>
                 </div>
               </div>
+              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">Average Flare-Up Duration</p>
+                <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                  {avgFlareDuration === null ? "—" : `${avgFlareDuration} min`}
+                </p>
+              </div>
             </div>
 
             {/* System averages */}
@@ -277,6 +309,37 @@ function InsightsPage() {
               </div>
             </div>
 
+            {/* Symptom frequency */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Symptom Frequency
+              </h2>
+              <div className="space-y-3">
+                {symptomCounts.map((s) => {
+                  const pct = symptomDenominator > 0 ? (s.count / symptomDenominator) * 100 : 0;
+                  return (
+                    <div key={s.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-foreground">{s.label}</span>
+                        <span className="text-[11px] font-mono tabular-nums text-muted-foreground">
+                          {Math.round(pct)}% · {s.count}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {symptomDenominator === 0 && (
+                  <p className="text-xs text-muted-foreground">No symptom data logged in this range.</p>
+                )}
+              </div>
+            </div>
+
             {/* Health trend line */}
             <div className="rounded-2xl bg-card border border-border p-5">
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
@@ -285,6 +348,13 @@ function InsightsPage() {
               <div className="h-48 -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trend} margin={{ top: 5, right: 8, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="healthScoreGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
                     <XAxis
                       dataKey="label"
@@ -311,9 +381,9 @@ function InsightsPage() {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke="oklch(0.72 0.16 0)"
-                      strokeWidth={2.5}
-                      dot={{ r: 3, fill: "oklch(0.72 0.16 0)" }}
+                      stroke="url(#healthScoreGradient)"
+                      strokeWidth={3}
+                      dot={false}
                       connectNulls
                     />
                   </LineChart>

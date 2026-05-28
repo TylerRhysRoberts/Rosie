@@ -6,7 +6,7 @@ import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
   deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -32,6 +32,7 @@ function HistoryPage() {
   const [query, setQuery] = useState("");
   const [onlyPoor, setOnlyPoor] = useState(false);
   const [onlyFlare, setOnlyFlare] = useState(false);
+  const [onlyHoliday, setOnlyHoliday] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -46,10 +47,11 @@ function HistoryPage() {
     return logs.filter((l) => {
       if (onlyPoor && l.health_score !== 1) return false;
       if (onlyFlare && !l.flare_up) return false;
+      if (onlyHoliday && !l.holiday_mode) return false;
       if (q && !(l.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [logs, query, onlyPoor, onlyFlare]);
+  }, [logs, query, onlyPoor, onlyFlare, onlyHoliday]);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -122,6 +124,13 @@ function HistoryPage() {
               <AlertTriangle className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
               Flare-ups
             </FilterToggle>
+            <FilterToggle
+              on={onlyHoliday}
+              onClick={() => setOnlyHoliday((v) => !v)}
+              activeClass="bg-[oklch(0.92_0.05_230)] text-[oklch(0.35_0.10_230)] border-[oklch(0.78_0.08_230)]"
+            >
+              🏖 Holiday
+            </FilterToggle>
           </div>
         </div>
 
@@ -184,7 +193,13 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
   const takenMeds = Object.entries(log.medications).filter(([, m]) => m.taken);
 
   return (
-    <li className="relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors">
+    <li
+      className={`relative overflow-hidden rounded-2xl bg-card border transition-colors ${
+        log.holiday_mode
+          ? "border-[oklch(0.78_0.08_230)] hover:border-[oklch(0.68_0.12_230)]"
+          : "border-border hover:border-primary/30"
+      }`}
+    >
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -199,6 +214,9 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
             {formatDate(log.log_date)}
+            {log.holiday_mode && (
+              <Sun className="w-3.5 h-3.5 text-[oklch(0.62_0.14_230)]" />
+            )}
             {log.flare_up && (
               <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.58_0.20_25)]" />
             )}
@@ -208,7 +226,7 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
             {realSymptoms.length === 0
               ? " · No Symptoms"
               : ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`}
-            {walks > 0 && ` · ${walks}m walking`}
+            {walks > 0 && ` · ${walks}m 🚶‍♂️`}
             {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
           </p>
         </div>
@@ -332,13 +350,13 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function FilterToggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+function FilterToggle({ on, onClick, children, activeClass }: { on: boolean; onClick: () => void; children: React.ReactNode; activeClass?: string }) {
   return (
     <button
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
         on
-          ? "bg-primary text-primary-foreground border-primary"
+          ? (activeClass ?? "bg-primary text-primary-foreground border-primary")
           : "bg-card text-foreground border-border hover:border-primary/40"
       }`}
     >
