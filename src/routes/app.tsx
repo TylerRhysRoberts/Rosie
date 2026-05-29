@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
@@ -344,7 +344,9 @@ function LogPage() {
                 {log.holiday_mode ? "Holiday Mode" : "Daily Log"}
               </h1>
             </div>
-            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+              <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            </Link>
           </div>
           <div className="flex flex-col items-center gap-1">
             <button

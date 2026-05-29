@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -184,7 +184,9 @@ function MedicationsPage() {
               Medications
             </h1>
           </div>
-          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </Link>
         </div>
 
         {/* Sticky range filter */}
