@@ -80,6 +80,75 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_profile: {
+        Row: {
+          created_at: string
+          emergency_vet_phone: string
+          id: string
+          insurance_policy_number: string
+          insurance_provider: string
+          insurance_renewal_date: string | null
+          microchip_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emergency_vet_phone?: string
+          id?: string
+          insurance_policy_number?: string
+          insurance_provider?: string
+          insurance_renewal_date?: string | null
+          microchip_number?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emergency_vet_phone?: string
+          id?: string
+          insurance_policy_number?: string
+          insurance_provider?: string
+          insurance_renewal_date?: string | null
+          microchip_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dog_weight_history: {
+        Row: {
+          created_at: string
+          id: string
+          is_vet_visit: boolean
+          logged_date: string
+          updated_at: string
+          user_id: string
+          visit_notes: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_vet_visit?: boolean
+          logged_date?: string
+          updated_at?: string
+          user_id: string
+          visit_notes?: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_vet_visit?: boolean
+          logged_date?: string
+          updated_at?: string
+          user_id?: string
+          visit_notes?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       habit_logs: {
         Row: {
           created_at: string
