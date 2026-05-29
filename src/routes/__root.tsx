@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -39,6 +40,10 @@ export const Route = createRootRoute({
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "manifest",
+        href: "/manifest.webmanifest",
+      },
     ],
     scripts: [],
   }),
@@ -61,6 +66,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const isInIframe = (() => {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
+    })();
+
+    const isPreviewHost =
+      window.location.hostname.includes("id-preview--") ||
+      window.location.hostname.includes("preview--") ||
+      window.location.hostname.includes("lovableproject.com") ||
+      window.location.hostname.includes("lovableproject-dev.com");
+
+    if (isPreviewHost || isInIframe) {
+      navigator.serviceWorker?.getRegistrations().then((registrations) => {
+        registrations.forEach((r) => r.unregister());
+      });
+      return;
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   return (
     <>
       <div className="animate-page-enter h-[100dvh] w-full overflow-hidden flex flex-col">
