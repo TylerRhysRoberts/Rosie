@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
+import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -41,7 +41,7 @@ const SECONDARY_MEDS = MEDICATION_NAMES.filter(
 const WALK_TARGET_MIN = 45;
 
 function LogPage() {
-  const { user, isLoading: authLoading, signOut } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const search = Route.useSearch();
   const [date, setDate] = useState(search.date ?? todayKey());
@@ -336,39 +336,16 @@ function LogPage() {
       }`}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
-        <div className="flex items-start justify-between animate-fade-up-blur">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
-              <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">
-                {log.holiday_mode ? "Holiday Mode" : "Daily Log"}
-              </h1>
-            </div>
-            <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
-              <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
-            </Link>
+        <div className="flex items-center justify-between animate-fade-up-blur">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
+            <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">
+              {log.holiday_mode ? "Holiday Mode" : "Daily Log"}
+            </h1>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="text-muted-foreground hover:text-foreground p-2 rounded-lg active:scale-95"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={toggleHolidayMode}
-              className={`p-2 rounded-lg active:scale-95 transition-colors ${
-                log.holiday_mode
-                  ? "text-[oklch(0.5_0.18_220)] bg-[oklch(0.95_0.08_220)]"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label="Toggle holiday mode"
-              aria-pressed={log.holiday_mode}
-            >
-              <Sun className="w-4 h-4" />
-            </button>
-          </div>
+          <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </Link>
         </div>
 
         {/* Submission signifier */}
@@ -384,13 +361,28 @@ function LogPage() {
         <div className="mt-6 space-y-5">
           {/* 1. Header & system controls */}
           <Section label="Date">
-            <input
-              type="date"
-              value={date}
-              max={todayKey()}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={date}
+                max={todayKey()}
+                onChange={(e) => setDate(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <button
+                onClick={toggleHolidayMode}
+                className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
+                  log.holiday_mode
+                    ? "text-[oklch(0.5_0.18_220)] bg-[oklch(0.95_0.08_220)] border-[oklch(0.78_0.10_220)]"
+                    : "text-muted-foreground bg-card border-border hover:text-foreground"
+                }`}
+                aria-label="Toggle holiday mode"
+                aria-pressed={log.holiday_mode}
+                title={log.holiday_mode ? "Holiday mode on" : "Toggle holiday mode"}
+              >
+                <Sun className="w-5 h-5" />
+              </button>
+            </div>
             <button
               onClick={handleCopyYesterday}
               className="mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:border-primary/40 active:scale-[0.99] transition-all"
