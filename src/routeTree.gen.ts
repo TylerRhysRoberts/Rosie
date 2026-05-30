@@ -14,6 +14,7 @@ import { Route as MedicationsRouteImport } from './routes/medications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as DistanceCoveredRouteImport } from './routes/distance-covered'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -42,6 +43,11 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DistanceCoveredRoute = DistanceCoveredRouteImport.update({
+  id: '/distance-covered',
+  path: '/distance-covered',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -56,6 +62,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
+    | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRoute
+  DistanceCoveredRoute: typeof DistanceCoveredRoute
   HistoryRoute: typeof HistoryRoute
   InsightsRoute: typeof InsightsRoute
   LoginRoute: typeof LoginRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/distance-covered': {
+      id: '/distance-covered'
+      path: '/distance-covered'
+      fullPath: '/distance-covered'
+      preLoaderRoute: typeof DistanceCoveredRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRoute,
+  DistanceCoveredRoute: DistanceCoveredRoute,
   HistoryRoute: HistoryRoute,
   InsightsRoute: InsightsRoute,
   LoginRoute: LoginRoute,
