@@ -170,9 +170,9 @@ function DistanceCoveredPage() {
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">{formatDate(now)}</p>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
-            So far this year, you and Rosie have accumulated{" "}
-            <span className="font-bold text-[oklch(0.45_0.18_220)]">{totalMinutes.toLocaleString()} minutes</span>{" "}
-            of walking, covering a total calculated distance of{" "}
+            So far this year, you and Rosie have walked{" "}
+            <span className="font-bold text-[oklch(0.45_0.18_220)]">{formatDuration(totalMinutes)}</span>
+            , covering a total calculated distance of{" "}
             <span className="font-bold text-[oklch(0.45_0.18_145)]">{totalMiles.toFixed(2)} miles</span>!
           </p>
         </div>
