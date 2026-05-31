@@ -215,7 +215,7 @@ function DistanceCoveredPage() {
 
           {nextMilestone && (
             <p className="mt-3 text-xs text-muted-foreground text-center">
-              Next stop at <strong className="text-foreground">{nextMilestone.miles} mi</strong>: {nextLocation}
+              Walk <strong className="text-foreground">{remainingMinutes} more minutes</strong> to reach the next mystery location!
             </p>
           )}
         </div>
