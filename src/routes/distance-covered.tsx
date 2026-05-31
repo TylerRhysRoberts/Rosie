@@ -158,7 +158,9 @@ function DistanceCoveredPage() {
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Easter Egg</p>
             <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Where Has Rosie Been?</h1>
           </div>
-          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          <Link to="/profile">
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </Link>
         </div>
 
         {/* Summary card */}
