@@ -196,23 +196,25 @@ function InsightsPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
-        <div className="flex items-center justify-between animate-fade-up-blur">
-          <Link
-            to="/distance-covered"
-            aria-label="Where has Rosie been?"
-            className="h-11 w-11 rounded-full bg-gradient-to-br from-[oklch(0.85_0.12_220)] to-[oklch(0.78_0.14_145)] flex items-center justify-center text-white shadow-md animate-glow-pulse active:scale-95 transition-transform"
-          >
-            <Globe className="w-6 h-6" strokeWidth={2.2} />
-          </Link>
-          <div className="text-center">
+        <div className="flex items-start justify-between animate-fade-up-blur">
+          <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
               Trends
             </p>
             <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Insights</h1>
           </div>
-          <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
-            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/distance-covered"
+              aria-label="Where has Rosie been?"
+              className="text-xl active:scale-95 transition-transform"
+            >
+              🌍
+            </Link>
+            <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+              <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            </Link>
+          </div>
         </div>
 
         {/* Global time-range toggle */}
