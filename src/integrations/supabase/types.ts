@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           dins_percent: number
+          dins_prompting: boolean
           flare_event: Json
           flare_up: boolean
           health_score: number
@@ -39,6 +40,7 @@ export type Database = {
         Insert: {
           created_at?: string
           dins_percent?: number
+          dins_prompting?: boolean
           flare_event?: Json
           flare_up?: boolean
           health_score: number
@@ -60,6 +62,7 @@ export type Database = {
         Update: {
           created_at?: string
           dins_percent?: number
+          dins_prompting?: boolean
           flare_event?: Json
           flare_up?: boolean
           health_score?: number
