@@ -580,6 +580,15 @@ function LogPage() {
           {!log.holiday_mode && (
           <Section label="% of Dins" hint={`${log.dins_percent}%`}>
             <DinsSlider value={log.dins_percent} onChange={(v) => update("dins_percent", v)} />
+            <label className="mt-3 flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-border accent-primary"
+                checked={!!log.dins_prompting}
+                onChange={(e) => update("dins_prompting", e.target.checked)}
+              />
+              <span>Prompting?</span>
+            </label>
           </Section>
           )}
 

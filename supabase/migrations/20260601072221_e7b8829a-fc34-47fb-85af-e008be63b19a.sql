@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_logs ADD COLUMN dins_prompting boolean NOT NULL DEFAULT false;

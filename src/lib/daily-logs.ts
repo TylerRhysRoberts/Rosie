@@ -112,6 +112,7 @@ export interface DailyLog {
   location: string | null;
   routine_type: RoutineType | null;
   dins_percent: number;
+  dins_prompting: boolean;
   treats: string[];
   scavenged: string[];
   walks: Walk[];
@@ -159,6 +160,7 @@ export function emptyLog(date = todayKey()): DailyLog {
     location: "Home",
     routine_type: isWeekend ? "non_routine" : "routine",
     dins_percent: 100,
+    dins_prompting: false,
     treats: ["Cheese"],
     scavenged: [],
     walks: [],
@@ -226,6 +228,7 @@ export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog
     location: log.location,
     routine_type: log.routine_type,
     dins_percent: log.dins_percent,
+    dins_prompting: !!log.dins_prompting,
     treats: log.treats,
     scavenged: log.scavenged,
     walks: log.walks,
@@ -284,6 +287,7 @@ function rowToLog(r: any): DailyLog {
     location: r.location,
     routine_type: r.routine_type,
     dins_percent: typeof r.dins_percent === "number" ? r.dins_percent : 100,
+    dins_prompting: !!r.dins_prompting,
     treats: r.treats ?? [],
     scavenged: r.scavenged ?? [],
     walks: r.walks ?? [],
