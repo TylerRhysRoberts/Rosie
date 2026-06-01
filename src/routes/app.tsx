@@ -883,40 +883,44 @@ function CustomAdd({
   );
 }
 
-function DinsSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function DinsSlider({
+  value,
+  onChange,
+  prompting,
+  onPromptingChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  prompting: boolean;
+  onPromptingChange: (v: boolean) => void;
+}) {
   const over = value > 100;
   const pct = Math.min(150, Math.max(0, value));
-  const fillPercent = (pct / 150) * 100;
-  const normalFill = Math.min(100, pct);
-  const normalPct = (normalFill / 150) * 100;
+  const normalPct = (Math.min(100, pct) / 150) * 100;
+  const overPct = (pct / 150) * 100;
+  const pink = "oklch(0.78 0.12 0)";
+  const orange = "oklch(0.7 0.18 55)";
+  const muted = "oklch(0.92 0.01 80)";
+  const trackBg = over
+    ? `linear-gradient(to right, ${pink} 0%, ${pink} ${normalPct}%, ${orange} ${normalPct}%, ${orange} ${overPct}%, ${muted} ${overPct}%, ${muted} 100%)`
+    : `linear-gradient(to right, ${pink} 0%, ${pink} ${normalPct}%, ${muted} ${normalPct}%, ${muted} 100%)`;
   return (
     <div className="rounded-xl bg-card border border-border p-4">
-      <div className="flex items-baseline justify-between mb-2">
-        <span className={`text-2xl font-semibold tabular-nums ${over ? "text-[oklch(0.62_0.17_55)]" : "text-foreground"}`}>
-          {pct}%
-        </span>
-        {over && (
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.62_0.17_55)]">
-            Overfeed
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className={`text-2xl font-semibold tabular-nums ${over ? "text-[oklch(0.62_0.17_55)]" : "text-foreground"}`}>
+            {pct}%
           </span>
-        )}
-      </div>
-      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 bg-primary"
-          style={{ width: `${normalPct}%` }}
-        />
-        {over && (
-          <div
-            className="absolute inset-y-0 bg-[oklch(0.7_0.18_55)]"
-            style={{ left: `${normalPct}%`, width: `${fillPercent - normalPct}%` }}
-          />
-        )}
-        <div
-          className="absolute inset-y-0 w-px bg-foreground/30"
-          style={{ left: "66.66%" }}
-          aria-hidden
-        />
+          {over && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.62_0.17_55)]">
+              Overfeed
+            </span>
+          )}
+        </div>
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <span className="text-muted-foreground">Prompting?</span>
+          <Toggle on={prompting} onChange={onPromptingChange} />
+        </label>
       </div>
       <input
         type="range"
@@ -925,9 +929,10 @@ function DinsSlider({ value, onChange }: { value: number; onChange: (v: number) 
         step={5}
         value={pct}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full mt-3 accent-primary"
+        className="dins-range w-full appearance-none h-2 rounded-full cursor-pointer focus:outline-none"
+        style={{ background: trackBg }}
       />
-      <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-0.5">
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-2 px-0.5">
         <span>0%</span><span>50%</span><span>100%</span><span>150%</span>
       </div>
     </div>
