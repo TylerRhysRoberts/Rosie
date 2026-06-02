@@ -55,7 +55,11 @@ function InsightsPage() {
 
 
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - rangeDays);
+  if (rangeDays === 90) {
+    cutoff.setDate(cutoff.getDate() - 90);
+  } else {
+    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
+  }
   const cutoffStr = cutoff.toISOString().split("T")[0];
   const ranged = logs.filter((l) => l.log_date >= cutoffStr);
 
