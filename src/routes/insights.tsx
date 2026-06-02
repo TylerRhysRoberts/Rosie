@@ -200,6 +200,32 @@ function InsightsPage() {
   const trendHolidaySegments = showHolidayOverlay ? computeHolidaySegments(trend) : [];
   const walkHolidaySegments = showHolidayOverlay ? computeHolidaySegments(walkTrend) : [];
 
+  // Day-of-week activity heatmap
+  const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dowBuckets: number[][] = [[], [], [], [], [], [], []];
+  for (const l of ranged) {
+    const [y, m, d] = l.log_date.split("-").map(Number);
+    const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // 0=Mon
+    dowBuckets[dow].push(totalWalkMinutes(l.walks));
+  }
+  const dowData = DOW_LABELS.map((label, i) => {
+    const vals = dowBuckets[i];
+    let minutes = 0;
+    if (rangeDays === 7) {
+      minutes = vals.length > 0 ? vals[0] : 0;
+    } else if (vals.length > 0) {
+      minutes = Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
+    }
+    return { label, minutes };
+  });
+  const dowMax = Math.max(60, ...dowData.map((d) => d.minutes));
+  const dowColor = (m: number) => {
+    if (m >= 45) return "#047857";
+    if (m >= 30) return "#10B981";
+    if (m >= 15) return "#F59E0B";
+    return "#EF4444";
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
