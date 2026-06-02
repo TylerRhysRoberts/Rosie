@@ -23,6 +23,9 @@ import {
   CartesianGrid,
   ReferenceLine,
   ReferenceArea,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
 
 export const Route = createFileRoute("/insights")({
@@ -196,6 +199,32 @@ function InsightsPage() {
   const showHolidayOverlay = rangeDays !== 7;
   const trendHolidaySegments = showHolidayOverlay ? computeHolidaySegments(trend) : [];
   const walkHolidaySegments = showHolidayOverlay ? computeHolidaySegments(walkTrend) : [];
+
+  // Day-of-week activity heatmap
+  const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dowBuckets: number[][] = [[], [], [], [], [], [], []];
+  for (const l of ranged) {
+    const [y, m, d] = l.log_date.split("-").map(Number);
+    const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // 0=Mon
+    dowBuckets[dow].push(totalWalkMinutes(l.walks));
+  }
+  const dowData = DOW_LABELS.map((label, i) => {
+    const vals = dowBuckets[i];
+    let minutes = 0;
+    if (rangeDays === 7) {
+      minutes = vals.length > 0 ? vals[0] : 0;
+    } else if (vals.length > 0) {
+      minutes = Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
+    }
+    return { label, minutes };
+  });
+  const dowMax = Math.max(60, ...dowData.map((d) => d.minutes));
+  const dowColor = (m: number) => {
+    if (m >= 45) return "#047857";
+    if (m >= 30) return "#10B981";
+    if (m >= 15) return "#F59E0B";
+    return "#EF4444";
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -525,6 +554,48 @@ function InsightsPage() {
                       connectNulls
                     />
                   </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Day-of-week activity heatmap */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Day-of-Week Activity
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dowData} margin={{ top: 10, right: 5, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(dowMax / 15) * 15]}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={28}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      formatter={(v: any) => [`${v} min`, rangeDays === 7 ? "Walked" : "Avg"]}
+                    />
+                    <ReferenceLine
+                      y={45}
+                      stroke="#F48FB1"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                    />
+                    <Bar dataKey="minutes" radius={[6, 6, 0, 0]}>
+                      {dowData.map((d, i) => (
+                        <Cell key={i} fill={dowColor(d.minutes)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
