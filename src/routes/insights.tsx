@@ -658,6 +658,20 @@ function EmptyState() {
   );
 }
 
+function formatFlareDuration(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h} hour${h === 1 ? "" : "s"} and ${m} minute${m === 1 ? "" : "s"}`;
+}
+
+function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
+  if (rangeDays !== 90) return label;
+  const match = /^Wk\s+(\d+)/.exec(label);
+  if (!match) return label;
+  return Number(match[1]) % 2 === 1 ? label : "";
+}
+
 function WalkTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload ?? {};
