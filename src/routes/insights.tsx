@@ -23,6 +23,9 @@ import {
   CartesianGrid,
   ReferenceLine,
   ReferenceArea,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
 
 export const Route = createFileRoute("/insights")({
