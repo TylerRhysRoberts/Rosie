@@ -387,6 +387,13 @@ function DoseTrendChart({
   holidays: Record<string, boolean>;
 }) {
   const isWeekly = days.length >= 90;
+  const formatDayLabel = (d: string): string => {
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+    });
+  };
   const dailyData = days.map((d) => {
     const entry = doses[d];
     const dose = entry?.dosage;
@@ -394,7 +401,7 @@ function DoseTrendChart({
     const isRescue = !!entry?.is_rescue;
     return {
       date: d,
-      label: d.slice(5), // MM-DD
+      label: formatDayLabel(d),
       dose: value,
       routineDose: isRescue ? null : value,
       rescueDose: isRescue ? value : null,
@@ -459,6 +466,17 @@ function DoseTrendChart({
       })()
     : dailyData;
   const holidaySegments = computeHolidaySegments(data);
+  // Strict 5-tick X-axis for 30-day view (equidistant indices)
+  const fiveTicks: string[] | undefined =
+    !isWeekly && data.length >= 2
+      ? (() => {
+          const last = data.length - 1;
+          const seen = new Set<string>();
+          return [0, 1, 2, 3, 4]
+            .map((k) => data[Math.round((last * k) / 4)]?.label)
+            .filter((l): l is string => !!l && !seen.has(l) && (seen.add(l), true));
+        })()
+      : undefined;
   return (
     <div className="h-32 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -484,8 +502,9 @@ function DoseTrendChart({
           <XAxis
             dataKey="label"
             tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
-            interval="preserveStartEnd"
-            minTickGap={24}
+            {...(fiveTicks
+              ? { ticks: fiveTicks, interval: 0 as const }
+              : { interval: "preserveStartEnd" as const, minTickGap: 24 })}
           />
           <YAxis
             domain={[0, 1]}
@@ -494,7 +513,7 @@ function DoseTrendChart({
               v === 0 ? "0" : v === 1 ? "1" : v === 0.5 ? "½" : v === 0.25 ? "¼" : String(v)
             }
             tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
-            width={28}
+            width={30}
           />
           <YAxis
             yAxisId="right"
