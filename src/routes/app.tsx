@@ -9,9 +9,11 @@ import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, DEFAULT_TREATS, DEFAULT_SCAVENGED,
-  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
+  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, fetchLogs, upsertLog, totalWalkMinutes,
   EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
+import { MILES_PER_MINUTE, annualMilestones, newlyCrossedMilestones, pickLocation } from "@/lib/milestones";
+import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -54,6 +56,7 @@ function LogPage() {
   const [customMed, setCustomMed] = useState("");
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
 
   useEffect(() => {
     if (search.date && search.date !== date) setDate(search.date);
@@ -291,6 +294,42 @@ function LogPage() {
       const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
+      // Milestone check (annual walking challenge)
+      try {
+        const year = new Date().getFullYear();
+        const savedYear = Number(saved.log_date.slice(0, 4));
+        if (savedYear === year) {
+          const yearStart = `${year}-01-01`;
+          const yearLogs = await fetchLogs(user.id, 400);
+          let priorMinutes = 0;
+          let nextMinutes = 0;
+          for (const l of yearLogs) {
+            if (l.log_date < yearStart) continue;
+            const mins = totalWalkMinutes(l.walks);
+            if (l.log_date === saved.log_date) {
+              // exclude saved date from prior; nextMinutes will use saved
+              continue;
+            }
+            priorMinutes += mins;
+            nextMinutes += mins;
+          }
+          nextMinutes += totalWalkMinutes(saved.walks);
+          const priorMiles = priorMinutes * MILES_PER_MINUTE;
+          const nextMiles = nextMinutes * MILES_PER_MINUTE;
+          const crossed = newlyCrossedMilestones(priorMiles, nextMiles);
+          if (crossed.length > 0) {
+            const top = crossed[crossed.length - 1];
+            const m = annualMilestones[top];
+            setMilestoneModal({
+              name: pickLocation(m.miles, year),
+              totalMiles: nextMiles,
+              year,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("milestone check failed", e);
+      }
     } catch (err: any) {
       toast.error("Save failed", { description: err.message });
     } finally {
