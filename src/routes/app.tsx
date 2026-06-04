@@ -865,6 +865,13 @@ function LogPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <MilestoneCelebration
+        open={!!milestoneModal}
+        milestoneName={milestoneModal?.name ?? ""}
+        totalMiles={milestoneModal?.totalMiles ?? 0}
+        year={milestoneModal?.year ?? new Date().getFullYear()}
+        onClose={() => setMilestoneModal(null)}
+      />
       <BottomNav />
     </div>
   );
