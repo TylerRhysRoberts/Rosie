@@ -58,6 +58,11 @@ const DOSAGE_FILL_PCT: Record<DosageSize, number> = {
 
 const WINDOW_DAYS = 14;
 
+function formatDoseCount(n: number): string {
+  if (Number.isInteger(n)) return String(n);
+  return (Math.round(n * 10) / 10).toFixed(1);
+}
+
 function dateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
