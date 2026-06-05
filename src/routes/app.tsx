@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
+import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -442,13 +442,31 @@ function LogPage() {
           {/* 1. Header & system controls */}
           <Section label="Date">
             <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={date}
-                max={todayKey()}
-                onChange={(e) => setDate(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
+              <button
+                onClick={() => shiftDate(-1)}
+                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
+                aria-label="Previous day"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="date"
+                  value={date}
+                  max={todayKey()}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 pr-10 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <CalendarIcon className="w-5 h-5 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <button
+                onClick={() => shiftDate(1)}
+                disabled={date >= todayKey()}
+                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
+                aria-label="Next day"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
               <button
                 onClick={toggleHolidayMode}
                 className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
