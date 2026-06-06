@@ -602,6 +602,73 @@ function InsightsPage() {
             {/* Day-of-week activity heatmap */}
             <div className="rounded-2xl bg-card border border-border p-5">
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Walk Frequency
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={walkFreqTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
+                    <defs>
+                      <linearGradient id="walkFreqHealthGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(walkFreqXTicks ? { ticks: walkFreqXTicks, interval: 0 as const } : {})}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(maxFreq)]}
+                      allowDecimals={false}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={30}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      domain={[0.5, 3.5]}
+                      ticks={[1, 2, 3]}
+                      tick={<HealthDotTick />}
+                      width={18}
+                      tickMargin={2}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      content={<WalkFreqTooltip />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="frequency"
+                      stroke="oklch(0.72 0.16 0)"
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="healthScore"
+                      stroke="url(#walkFreqHealthGradient)"
+                      strokeWidth={3}
+                      dot={false}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Day-of-week activity heatmap */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
                 Day-of-Week Activity
               </h2>
               <div className="h-48 w-full">
