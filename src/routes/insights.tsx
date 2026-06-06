@@ -136,6 +136,13 @@ function InsightsPage() {
     rescueMeds: string[];
     holiday: boolean;
   }[] = [];
+  const walkFreqTrend: {
+    date: string;
+    label: string;
+    frequency: number | null;
+    healthScore: number | null;
+    holiday: boolean;
+  }[] = [];
 
   if (!isWeekly) {
     for (let i = rangeDays - 1; i >= 0; i--) {
@@ -158,6 +165,14 @@ function InsightsPage() {
         healthScore: match ? match.health_score : null,
         flare: match?.flare_event?.had_flareup ? match.flare_event : null,
         rescueMeds,
+        holiday,
+      });
+      const completedWalks = safeCompletedWalks(match?.walks);
+      walkFreqTrend.push({
+        date: key,
+        label,
+        frequency: completedWalks,
+        healthScore: match ? match.health_score : null,
         holiday,
       });
     }
@@ -191,6 +206,15 @@ function InsightsPage() {
         healthScore: avgS,
         flare: null,
         rescueMeds: [],
+        holiday,
+      });
+      const freqs = bucketLogs.map((l) => safeCompletedWalks(l.walks));
+      const avgF = freqs.length > 0 ? freqs.reduce((s, v) => s + v, 0) / freqs.length : null;
+      walkFreqTrend.push({
+        date: startKey,
+        label,
+        frequency: avgF === null ? null : Math.round(avgF * 10) / 10,
+        healthScore: avgS,
         holiday,
       });
     }
