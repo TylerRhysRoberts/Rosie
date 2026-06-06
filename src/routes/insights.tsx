@@ -781,6 +781,36 @@ function safeCompletedWalks(walks: unknown): number {
   }
 }
 
+function WalkFreqTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const freq = p.frequency;
+  const hs = p.healthScore;
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.72 0.16 0)" }}>● Walks:</span>{" "}
+        {freq == null ? "No log" : `${freq}`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {Math.round(hs) === 1 ? "Poor" : Math.round(hs) === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
   if (rangeDays !== 90) return label;
   const match = /^Wk\s+(\d+)/.exec(label);
