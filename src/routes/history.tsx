@@ -235,9 +235,11 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
               ? " · No Symptoms"
               : ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`}
             {walks > 0 && ` · ${walks}m 🚶‍♂️`}
-            {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
           </p>
         </div>
+        {log.notes && log.notes.trim().length > 0 && (
+          <StickyNote className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" aria-label="Has note" />
+        )}
         <span className="text-2xl" aria-hidden>{meta.emoji}</span>
         {expanded ? (
           <ChevronUp className="w-4 h-4 text-muted-foreground" />
