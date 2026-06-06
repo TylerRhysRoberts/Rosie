@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -97,8 +97,49 @@
   --sidebar-ring: oklch(0.745 0.122 1);
 }
 
-.dark {
-  /* Light mode only — dark mode disabled for Rosie Health Hub */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Deep warm charcoal background */
+    --background: oklch(0.18 0.005 60);
+    --foreground: oklch(0.96 0.005 80);
+    /* Cards: low-contrast dark grey */
+    --card: oklch(0.23 0.006 60);
+    --card-foreground: oklch(0.96 0.005 80);
+    --popover: oklch(0.23 0.006 60);
+    --popover-foreground: oklch(0.96 0.005 80);
+    /* Desaturated deeper rose accent */
+    --primary: oklch(0.62 0.10 5);
+    --primary-foreground: oklch(0.98 0.005 80);
+    --secondary: oklch(0.30 0.010 50);
+    --secondary-foreground: oklch(0.92 0.005 80);
+    --muted: oklch(0.27 0.008 60);
+    --muted-foreground: oklch(0.72 0.010 70);
+    --accent: oklch(0.34 0.040 10);
+    --accent-foreground: oklch(0.94 0.020 10);
+    --destructive: oklch(0.55 0.18 25);
+    --destructive-foreground: oklch(0.98 0.005 80);
+    --border: oklch(0.30 0.006 60);
+    --input: oklch(0.30 0.006 60);
+    --ring: oklch(0.62 0.10 5);
+    --mint: oklch(0.30 0.010 50);
+    --mint-foreground: oklch(0.92 0.005 80);
+    --surface-alt: oklch(0.25 0.006 60);
+    --success: oklch(0.62 0.14 145);
+    --warning: oklch(0.70 0.13 75);
+    --chart-1: oklch(0.62 0.10 5);
+    --chart-2: oklch(0.55 0.040 40);
+    --chart-3: oklch(0.62 0.14 145);
+    --chart-4: oklch(0.70 0.13 75);
+    --chart-5: oklch(0.62 0.18 25);
+    --sidebar: oklch(0.23 0.006 60);
+    --sidebar-foreground: oklch(0.96 0.005 80);
+    --sidebar-primary: oklch(0.62 0.10 5);
+    --sidebar-primary-foreground: oklch(0.98 0.005 80);
+    --sidebar-accent: oklch(0.27 0.008 60);
+    --sidebar-accent-foreground: oklch(0.94 0.020 10);
+    --sidebar-border: oklch(0.30 0.006 60);
+    --sidebar-ring: oklch(0.62 0.10 5);
+  }
 }
 
 @layer base {
