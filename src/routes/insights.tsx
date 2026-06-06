@@ -236,6 +236,8 @@ function InsightsPage() {
   };
   const trendXTicks = rangeDays === 30 ? fiveTicks(trend) : undefined;
   const walkXTicks = rangeDays === 30 ? fiveTicks(walkTrend) : undefined;
+  const walkFreqXTicks = rangeDays === 30 ? fiveTicks(walkFreqTrend) : undefined;
+  const maxFreq = Math.max(3, ...walkFreqTrend.map((w) => w.frequency ?? 0));
 
   // Day-of-week activity heatmap
   const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
