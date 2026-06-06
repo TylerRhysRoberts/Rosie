@@ -6,7 +6,7 @@ import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
   deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun, StickyNote } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,6 +33,7 @@ function HistoryPage() {
   const [onlyPoor, setOnlyPoor] = useState(false);
   const [onlyFlare, setOnlyFlare] = useState(false);
   const [onlyHoliday, setOnlyHoliday] = useState(false);
+  const [onlyNotes, setOnlyNotes] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -48,10 +49,11 @@ function HistoryPage() {
       if (onlyPoor && l.health_score !== 1) return false;
       if (onlyFlare && !l.flare_up) return false;
       if (onlyHoliday && !l.holiday_mode) return false;
+      if (onlyNotes && !(l.notes && l.notes.trim().length > 0)) return false;
       if (q && !(l.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [logs, query, onlyPoor, onlyFlare, onlyHoliday]);
+  }, [logs, query, onlyPoor, onlyFlare, onlyHoliday, onlyNotes]);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -132,6 +134,10 @@ function HistoryPage() {
               activeClass="bg-[oklch(0.92_0.05_230)] text-[oklch(0.35_0.10_230)] border-[oklch(0.78_0.08_230)]"
             >
               🏖 Holiday
+            </FilterToggle>
+            <FilterToggle on={onlyNotes} onClick={() => setOnlyNotes((v) => !v)}>
+              <StickyNote className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+              Notes
             </FilterToggle>
           </div>
         </div>
@@ -229,9 +235,11 @@ function HistoryCard({ log, onRequestDelete }: { log: DailyLog; onRequestDelete:
               ? " · No Symptoms"
               : ` · ${realSymptoms.length} symptom${realSymptoms.length === 1 ? "" : "s"}`}
             {walks > 0 && ` · ${walks}m 🚶‍♂️`}
-            {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? "…" : ""}`}
           </p>
         </div>
+        {log.notes && log.notes.trim().length > 0 && (
+          <StickyNote className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" aria-label="Has note" />
+        )}
         <span className="text-2xl" aria-hidden>{meta.emoji}</span>
         {expanded ? (
           <ChevronUp className="w-4 h-4 text-muted-foreground" />
