@@ -136,6 +136,13 @@ function InsightsPage() {
     rescueMeds: string[];
     holiday: boolean;
   }[] = [];
+  const walkFreqTrend: {
+    date: string;
+    label: string;
+    frequency: number | null;
+    healthScore: number | null;
+    holiday: boolean;
+  }[] = [];
 
   if (!isWeekly) {
     for (let i = rangeDays - 1; i >= 0; i--) {
@@ -158,6 +165,14 @@ function InsightsPage() {
         healthScore: match ? match.health_score : null,
         flare: match?.flare_event?.had_flareup ? match.flare_event : null,
         rescueMeds,
+        holiday,
+      });
+      const completedWalks = safeCompletedWalks(match?.walks);
+      walkFreqTrend.push({
+        date: key,
+        label,
+        frequency: completedWalks,
+        healthScore: match ? match.health_score : null,
         holiday,
       });
     }
@@ -193,6 +208,15 @@ function InsightsPage() {
         rescueMeds: [],
         holiday,
       });
+      const freqs = bucketLogs.map((l) => safeCompletedWalks(l.walks));
+      const avgF = freqs.length > 0 ? freqs.reduce((s, v) => s + v, 0) / freqs.length : null;
+      walkFreqTrend.push({
+        date: startKey,
+        label,
+        frequency: avgF === null ? null : Math.round(avgF * 10) / 10,
+        healthScore: avgS,
+        holiday,
+      });
     }
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
@@ -212,6 +236,8 @@ function InsightsPage() {
   };
   const trendXTicks = rangeDays === 30 ? fiveTicks(trend) : undefined;
   const walkXTicks = rangeDays === 30 ? fiveTicks(walkTrend) : undefined;
+  const walkFreqXTicks = rangeDays === 30 ? fiveTicks(walkFreqTrend) : undefined;
+  const maxFreq = Math.max(3, ...walkFreqTrend.map((w) => w.frequency ?? 0));
 
   // Day-of-week activity heatmap
   const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -576,6 +602,73 @@ function InsightsPage() {
             {/* Day-of-week activity heatmap */}
             <div className="rounded-2xl bg-card border border-border p-5">
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Walk Frequency
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={walkFreqTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
+                    <defs>
+                      <linearGradient id="walkFreqHealthGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(walkFreqXTicks ? { ticks: walkFreqXTicks, interval: 0 as const } : {})}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(maxFreq)]}
+                      allowDecimals={false}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={30}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      domain={[0.5, 3.5]}
+                      ticks={[1, 2, 3]}
+                      tick={<HealthDotTick />}
+                      width={18}
+                      tickMargin={2}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      content={<WalkFreqTooltip />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="frequency"
+                      stroke="oklch(0.72 0.16 0)"
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="healthScore"
+                      stroke="url(#walkFreqHealthGradient)"
+                      strokeWidth={3}
+                      dot={false}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Day-of-week activity heatmap */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
                 Day-of-Week Activity
               </h2>
               <div className="h-48 w-full">
@@ -676,6 +769,46 @@ function formatFlareDuration(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${h} hrs and ${m} mins`;
+}
+
+function safeCompletedWalks(walks: unknown): number {
+  try {
+    const arr = typeof walks === "string" ? JSON.parse(walks) : walks;
+    if (!Array.isArray(arr)) return 0;
+    return arr.filter((w: any) => w && w.completed === true).length;
+  } catch {
+    return 0;
+  }
+}
+
+function WalkFreqTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const freq = p.frequency;
+  const hs = p.healthScore;
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.72 0.16 0)" }}>● Walks:</span>{" "}
+        {freq == null ? "No log" : `${freq}`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {Math.round(hs) === 1 ? "Poor" : Math.round(hs) === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
