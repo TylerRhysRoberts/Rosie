@@ -49,6 +49,7 @@ const WALK_TARGET_MIN = 45;
 function LogPage() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const notify = useNotificationQueue();
   const search = Route.useSearch();
   const [date, setDate] = useState(search.date ?? todayKey());
   const [log, setLog] = useState<DailyLog>(emptyLog());
