@@ -14,6 +14,10 @@ import {
 } from "@/lib/daily-logs";
 import { MILES_PER_MINUTE, annualMilestones, newlyCrossedMilestones, pickLocation } from "@/lib/milestones";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
+import { ACHIEVEMENTS, evaluateAchievements, type EvalCtx } from "@/lib/achievements";
+import { bumpNight, bumpLateEdit, loadMeta } from "@/lib/achievements-meta";
+import { useNotificationQueue } from "@/components/NotificationQueueProvider";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -332,6 +336,55 @@ function LogPage() {
       const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
+      // ── Lifetime achievements evaluation ────────────────────────
+      try {
+        // Update ambient meta counters (night log / late edit).
+        const hour = new Date().getHours();
+        let meta = loadMeta(user.id);
+        if (hour >= 23 || hour < 4) meta = bumpNight(user.id);
+        // Late edit: compare saved.updated_at vs created_at on row if available.
+        // Best-effort via the saved row we just upserted: re-fetch row metadata.
+        try {
+          const { data: row } = await supabase
+            .from("daily_logs")
+            .select("created_at, updated_at")
+            .eq("user_id", user.id)
+            .eq("log_date", saved.log_date)
+            .maybeSingle();
+          if (row?.created_at && row?.updated_at) {
+            const diff = new Date(row.updated_at).getTime() - new Date(row.created_at).getTime();
+            if (diff > 3 * 60 * 60 * 1000) meta = bumpLateEdit(user.id);
+          }
+        } catch { /* ignore */ }
+
+        const allLogs = (await fetchLogs(user.id, 4000))
+          .slice()
+          .sort((a, b) => a.log_date.localeCompare(b.log_date));
+        const { data: existing } = await supabase
+          .from("lifetime_achievements")
+          .select("achievement_id")
+          .eq("user_id", user.id);
+        const existingSet = new Set((existing ?? []).map((r: any) => r.achievement_id as string));
+        const ctx: EvalCtx = {
+          logs: allLogs, now: new Date(),
+          savedAtNight: hour >= 23 || hour < 4,
+          savedAsLateEdit: false,
+          meta,
+        };
+        const newly = evaluateAchievements(ctx, existingSet);
+        if (newly.length > 0) {
+          await supabase.from("lifetime_achievements").insert(
+            newly.map((a) => ({ user_id: user.id, achievement_id: a.id })),
+          );
+          for (const a of newly) {
+            notify.enqueue({ kind: "achievement", id: `achv-${a.id}`, achievement: a });
+          }
+        }
+        // Silence unused-import warning when ACHIEVEMENTS list isn't otherwise referenced.
+        void ACHIEVEMENTS;
+      } catch (e) {
+        console.error("achievement eval failed", e);
+      }
       // Milestone check (annual walking challenge)
       try {
         const year = new Date().getFullYear();
