@@ -220,6 +220,33 @@ export type Database = {
         }
         Relationships: []
       }
+      lifetime_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          id: string
+          progress: Json
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          id?: string
+          progress?: Json
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          id?: string
+          progress?: Json
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

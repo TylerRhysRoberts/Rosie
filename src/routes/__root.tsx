@@ -1,6 +1,7 @@
 import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
+import { NotificationQueueProvider } from "@/components/NotificationQueueProvider";
 
 import appCss from "../styles.css?url";
 
@@ -98,7 +99,9 @@ function RootComponent() {
   return (
     <>
       <div className="animate-page-enter h-[100dvh] w-full overflow-hidden flex flex-col">
-        <Outlet />
+        <NotificationQueueProvider>
+          <Outlet />
+        </NotificationQueueProvider>
       </div>
       <Toaster position="top-center" />
     </>

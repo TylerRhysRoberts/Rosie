@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
-  Copy, Phone, ChevronDown, ChevronUp, Check, Trash2, Stethoscope,
+  Copy, Phone, ChevronDown, ChevronUp, Check, Trash2, Stethoscope, Trophy,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -258,11 +258,20 @@ function ProfilePage() {
             </p>
             <p className="text-sm font-medium text-foreground mt-1">{age}</p>
           </div>
-          <img
-            src={rosieLogo}
-            alt="Rosie"
-            className="h-20 w-20 rounded-full object-cover shadow-sm shrink-0"
-          />
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => navigate({ to: "/profile/achievements" })}
+              className="h-11 w-11 inline-flex items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 active:scale-95 transition-transform"
+              aria-label="View achievements"
+            >
+              <Trophy className="w-5 h-5" />
+            </button>
+            <img
+              src={rosieLogo}
+              alt="Rosie"
+              className="h-20 w-20 rounded-full object-cover shadow-sm"
+            />
+          </div>
         </div>
 
         <div className="mt-6 space-y-4">
