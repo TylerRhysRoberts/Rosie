@@ -34,7 +34,7 @@ export interface EvalCtx {
   /** Did the most recently saved log occur > 3h after its initial creation? */
   savedAsLateEdit: boolean;
   /** Achievement-id → existing progress snapshots (for cumulative counters). */
-  meta: Record<string, number> | { time_night: number; update_diligent: number };
+  meta: { time_night: number; update_diligent: number };
 }
 
 // ─────────── helpers ───────────
