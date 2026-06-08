@@ -13,7 +13,7 @@ import {
   CartesianGrid, ReferenceArea,
 } from "recharts";
 
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/profile/")({
   component: ProfilePage,
   head: () => ({
     meta: [
@@ -556,7 +556,7 @@ function ProfilePage() {
       </div>
       <BottomNav />
     </div>
-  );
+  )
 }
 
 function Card({ children }: { children: React.ReactNode }) {
