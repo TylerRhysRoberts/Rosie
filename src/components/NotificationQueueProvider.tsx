@@ -43,7 +43,7 @@ export function NotificationQueueProvider({ children }: { children: ReactNode })
   const dismiss = () => setQueue((q) => q.slice(1));
   const view = () => {
     setQueue((q) => q.slice(1));
-    navigate({ to: "/profile/achievements" });
+    navigate({ to: "/achievements" });
   };
 
   const value = useMemo(() => ({ enqueue }), [enqueue]);

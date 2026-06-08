@@ -260,7 +260,7 @@ function ProfilePage() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => navigate({ to: "/profile/achievements" })}
+              onClick={() => navigate({ to: "/achievements" })}
               className="h-11 w-11 inline-flex items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 active:scale-95 transition-transform"
               aria-label="View achievements"
             >
