@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -259,13 +259,13 @@ function ProfilePage() {
             <p className="text-sm font-medium text-foreground mt-1">{age}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => navigate({ to: "/profile/achievements" })}
+            <Link
+              to="/achievements"
               className="h-11 w-11 inline-flex items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 active:scale-95 transition-transform"
               aria-label="View achievements"
             >
               <Trophy className="w-5 h-5" />
-            </button>
+            </Link>
             <img
               src={rosieLogo}
               alt="Rosie"

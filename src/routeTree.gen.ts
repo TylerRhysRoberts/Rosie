@@ -15,9 +15,9 @@ import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DistanceCoveredRouteImport } from './routes/distance-covered'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
-import { Route as ProfileAchievementsRouteImport } from './routes/profile.achievements'
 
 const MedicationsRoute = MedicationsRouteImport.update({
   id: '/medications',
@@ -49,6 +49,11 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AchievementsRoute = AchievementsRouteImport.update({
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -59,84 +64,80 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileAchievementsRoute = ProfileAchievementsRouteImport.update({
-  id: '/achievements',
-  path: '/achievements',
-  getParentRoute: () => ProfileRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/app': typeof AppRoute
   '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/medications': typeof MedicationsRoute
-  '/profile/achievements': typeof ProfileAchievementsRoute
   '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/app': typeof AppRoute
   '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/medications': typeof MedicationsRoute
-  '/profile/achievements': typeof ProfileAchievementsRoute
   '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/app': typeof AppRoute
   '/distance-covered': typeof DistanceCoveredRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/medications': typeof MedicationsRoute
-  '/profile/achievements': typeof ProfileAchievementsRoute
   '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/achievements'
     | '/app'
     | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
     | '/medications'
-    | '/profile/achievements'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/achievements'
     | '/app'
     | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
     | '/medications'
-    | '/profile/achievements'
     | '/profile'
   id:
     | '__root__'
     | '/'
+    | '/achievements'
     | '/app'
     | '/distance-covered'
     | '/history'
     | '/insights'
     | '/login'
     | '/medications'
-    | '/profile/achievements'
     | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AchievementsRoute: typeof AchievementsRoute
   AppRoute: typeof AppRoute
   DistanceCoveredRoute: typeof DistanceCoveredRoute
   HistoryRoute: typeof HistoryRoute
@@ -190,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/achievements': {
+      id: '/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AchievementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -204,18 +212,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile/achievements': {
-      id: '/profile/achievements'
-      path: '/achievements'
-      fullPath: '/profile/achievements'
-      preLoaderRoute: typeof ProfileAchievementsRouteImport
-      parentRoute: typeof ProfileRoute
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AchievementsRoute: AchievementsRoute,
   AppRoute: AppRoute,
   DistanceCoveredRoute: DistanceCoveredRoute,
   HistoryRoute: HistoryRoute,
