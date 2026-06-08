@@ -150,13 +150,12 @@ function DistanceCoveredPage() {
   const remainingMinutes = nextMilestone ? Math.ceil(((nextMilestone.miles - totalMiles) * 60) / 2.5) : 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-[oklch(0.97_0.04_220)] via-background to-[oklch(0.97_0.04_145)]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-[oklch(0.97_0.04_220)] via-background to-[oklch(0.97_0.04_145)] dark:bg-none dark:bg-zinc-800">
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
         {/* Header */}
         <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Easter Egg</p>
-            <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Where Has Rosie Been?</h1>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Where Has Rosie Been?</h1>
           </div>
           <Link to="/profile">
             <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
@@ -164,16 +163,16 @@ function DistanceCoveredPage() {
         </div>
 
         {/* Summary card */}
-        <div className="mt-6 rounded-3xl p-5 bg-gradient-to-br from-[oklch(0.92_0.10_220)] to-[oklch(0.94_0.08_280)] border border-[oklch(0.85_0.06_220)] shadow-sm animate-fade-up-blur">
-          <p className="text-[11px] uppercase tracking-widest font-semibold text-[oklch(0.4_0.15_220)]">
+        <div className="mt-6 rounded-3xl p-5 bg-gradient-to-br from-[oklch(0.92_0.10_220)] to-[oklch(0.94_0.08_280)] border border-[oklch(0.85_0.06_220)] shadow-sm animate-fade-up-blur dark:bg-none dark:bg-black dark:border-zinc-800">
+          <p className="text-[11px] uppercase tracking-widest font-semibold text-[oklch(0.4_0.15_220)] dark:text-white">
             Annual Walking Challenge {year}
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(now)}</p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5 dark:text-white">{formatDate(now)}</p>
+          <p className="mt-3 text-sm leading-relaxed text-foreground dark:text-white">
             So far this year, you and Rosie have walked{" "}
-            <span className="font-bold text-[oklch(0.45_0.18_220)]">{formatDuration(totalMinutes)}</span>
+            <span className="font-bold text-[oklch(0.45_0.18_220)] dark:text-white">{formatDuration(totalMinutes)}</span>
             , covering a total calculated distance of{" "}
-            <span className="font-bold text-[oklch(0.45_0.18_145)]">{totalMiles.toFixed(2)} miles</span>!
+            <span className="font-bold text-[oklch(0.45_0.18_145)] dark:text-white">{totalMiles.toFixed(2)} miles</span>!
           </p>
         </div>
 
@@ -197,11 +196,11 @@ function DistanceCoveredPage() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl p-4 bg-[oklch(0.97_0.05_145)] border border-[oklch(0.85_0.08_145)]">
-            <p className="text-[11px] uppercase tracking-widest font-semibold text-[oklch(0.4_0.15_145)]">
+          <div className="mt-5 rounded-2xl p-4 bg-[oklch(0.97_0.05_145)] border border-[oklch(0.85_0.08_145)] dark:bg-zinc-900 dark:border-zinc-800">
+            <p className="text-[11px] uppercase tracking-widest font-semibold text-[oklch(0.4_0.15_145)] dark:text-white">
               Current Stop
             </p>
-            <p className="mt-1 text-lg font-semibold text-foreground leading-snug">
+            <p className="mt-1 text-lg font-semibold text-foreground leading-snug dark:text-white">
               {activeLocation}!
             </p>
             <a
@@ -224,8 +223,8 @@ function DistanceCoveredPage() {
 
         {/* Timeline */}
         <div className="mt-6 animate-fade-up-blur">
-          <h2 className="text-lg font-semibold text-foreground tracking-tight">Rosie's Travel Log</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Milestones unlocked in {year}</p>
+          <h2 className="text-lg font-semibold text-foreground tracking-tight dark:text-white">Rosie's Travel Log</h2>
+          <p className="text-xs text-muted-foreground mt-0.5 dark:text-white">Milestones unlocked in {year}</p>
 
           {unlockedTimeline.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
