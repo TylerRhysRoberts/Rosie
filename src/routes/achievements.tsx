@@ -13,7 +13,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/profile/achievements")({
+export const Route = createFileRoute("/achievements")({
   component: AchievementsPage,
   head: () => ({
     meta: [
