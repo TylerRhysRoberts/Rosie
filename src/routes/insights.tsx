@@ -550,6 +550,74 @@ function InsightsPage() {
               </div>
             </div>
 
+            {/* Dins % Eaten vs Health Score */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Dins % Eaten vs Health Score
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dinsTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
+                    <defs>
+                      <linearGradient id="dinsHealthGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(dinsXTicks ? { ticks: dinsXTicks, interval: 0 as const } : {})}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(maxDins / 25) * 25]}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={32}
+                      tickFormatter={(v: number) => `${v}%`}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      domain={[0.5, 3.5]}
+                      ticks={[1, 2, 3]}
+                      tick={<HealthDotTick />}
+                      width={18}
+                      tickMargin={2}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      content={<DinsTooltip />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="dins"
+                      stroke="oklch(0.65 0.18 260)"
+                      strokeWidth={2}
+                      dot={<PromptingDot />}
+                      activeDot={{ r: 5 }}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="healthScore"
+                      stroke="url(#dinsHealthGradient)"
+                      strokeWidth={3}
+                      dot={false}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
             {/* Daily total walk duration */}
             <div className="rounded-2xl bg-card border border-border p-5">
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
