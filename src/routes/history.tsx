@@ -31,8 +31,10 @@ function HistoryPage() {
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [onlyPoor, setOnlyPoor] = useState(false);
+  const [onlyNeutral, setOnlyNeutral] = useState(false);
   const [onlyFlare, setOnlyFlare] = useState(false);
   const [onlyHoliday, setOnlyHoliday] = useState(false);
+  const [onlyNotHome, setOnlyNotHome] = useState(false);
   const [onlyNotes, setOnlyNotes] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -47,13 +49,15 @@ function HistoryPage() {
     const q = query.trim().toLowerCase();
     return logs.filter((l) => {
       if (onlyPoor && l.health_score !== 1) return false;
+      if (onlyNeutral && l.health_score !== 2) return false;
       if (onlyFlare && !l.flare_up) return false;
       if (onlyHoliday && !l.holiday_mode) return false;
+      if (onlyNotHome && !(l.location && l.location !== "Home")) return false;
       if (onlyNotes && !(l.notes && l.notes.trim().length > 0)) return false;
       if (q && !(l.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [logs, query, onlyPoor, onlyFlare, onlyHoliday, onlyNotes]);
+  }, [logs, query, onlyPoor, onlyNeutral, onlyFlare, onlyHoliday, onlyNotHome, onlyNotes]);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -120,25 +124,19 @@ function HistoryPage() {
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
-          <div className="flex gap-2">
-            <FilterToggle on={onlyPoor} onClick={() => setOnlyPoor((v) => !v)}>
-              Only Poor Days
-            </FilterToggle>
-            <FilterToggle on={onlyFlare} onClick={() => setOnlyFlare((v) => !v)}>
-              <AlertTriangle className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
-              Flare-ups
-            </FilterToggle>
+          <div className="grid grid-cols-3 gap-2">
+            <FilterToggle on={onlyPoor} onClick={() => setOnlyPoor((v) => !v)}>Poor</FilterToggle>
+            <FilterToggle on={onlyNeutral} onClick={() => setOnlyNeutral((v) => !v)}>Neutral</FilterToggle>
+            <FilterToggle on={onlyFlare} onClick={() => setOnlyFlare((v) => !v)}>Flare-Up</FilterToggle>
             <FilterToggle
               on={onlyHoliday}
               onClick={() => setOnlyHoliday((v) => !v)}
               activeClass="bg-[oklch(0.92_0.05_230)] text-[oklch(0.35_0.10_230)] border-[oklch(0.78_0.08_230)]"
             >
-              🏖 Holiday
+              Holiday
             </FilterToggle>
-            <FilterToggle on={onlyNotes} onClick={() => setOnlyNotes((v) => !v)}>
-              <StickyNote className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
-              Notes
-            </FilterToggle>
+            <FilterToggle on={onlyNotHome} onClick={() => setOnlyNotHome((v) => !v)}>Not Home</FilterToggle>
+            <FilterToggle on={onlyNotes} onClick={() => setOnlyNotes((v) => !v)}>Notes</FilterToggle>
           </div>
         </div>
 
@@ -364,7 +362,7 @@ function FilterToggle({ on, onClick, children, activeClass }: { on: boolean; onC
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
+      className={`w-full h-8 px-2 rounded-full text-xs font-medium border transition-all active:scale-95 whitespace-nowrap leading-none flex items-center justify-center ${
         on
           ? (activeClass ?? "bg-primary text-primary-foreground border-primary")
           : "bg-card text-foreground border-border hover:border-primary/40"

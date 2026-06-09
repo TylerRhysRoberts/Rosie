@@ -553,7 +553,7 @@ function InsightsPage() {
             {/* Dins % Eaten vs Health Score */}
             <div className="rounded-2xl bg-card border border-border p-5">
               <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
-                Dins % Eaten vs Health Score
+                DINS % EATEN
               </h2>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -598,7 +598,7 @@ function InsightsPage() {
                     <Line
                       type="monotone"
                       dataKey="dins"
-                      stroke="oklch(0.65 0.18 260)"
+                      stroke="#87CEEB"
                       strokeWidth={2}
                       dot={<PromptingDot />}
                       activeDot={{ r: 5 }}
@@ -971,7 +971,7 @@ function PromptingDot(props: any) {
       cy={cy}
       r={5}
       fill="#fff"
-      stroke="oklch(0.65 0.18 260)"
+      stroke="#87CEEB"
       strokeWidth={2}
     />
   );
@@ -995,7 +995,7 @@ function DinsTooltip({ active, payload, label }: any) {
     >
       <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
       <div className="text-[11px]">
-        <span style={{ color: "oklch(0.65 0.18 260)" }}>● Dins:</span>{" "}
+        <span style={{ color: "#87CEEB" }}>● Dins:</span>{" "}
         {dins == null ? "No log" : `${dins}%`}
       </div>
       {hs != null && (
@@ -1004,7 +1004,7 @@ function DinsTooltip({ active, payload, label }: any) {
         </div>
       )}
       {p.prompting && (
-        <div className="text-[11px] mt-1" style={{ color: "oklch(0.65 0.18 260)" }}>
+        <div className="text-[11px] mt-1" style={{ color: "#87CEEB" }}>
           ○ Prompting required
         </div>
       )}
