@@ -960,3 +960,54 @@ function WalkTooltip({ active, payload, label }: any) {
     </div>
   );
 }
+
+function PromptingDot(props: any) {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || payload?.dins == null) return null;
+  if (!payload?.prompting) return null;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={5}
+      fill="#fff"
+      stroke="oklch(0.65 0.18 260)"
+      strokeWidth={2}
+    />
+  );
+}
+
+function DinsTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const dins = p.dins;
+  const hs = p.healthScore;
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.65 0.18 260)" }}>● Dins:</span>{" "}
+        {dins == null ? "No log" : `${dins}%`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {Math.round(hs) === 1 ? "Poor" : Math.round(hs) === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+      {p.prompting && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.65 0.18 260)" }}>
+          ○ Prompting required
+        </div>
+      )}
+    </div>
+  );
+}
