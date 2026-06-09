@@ -143,6 +143,14 @@ function InsightsPage() {
     healthScore: number | null;
     holiday: boolean;
   }[] = [];
+  const dinsTrend: {
+    date: string;
+    label: string;
+    dins: number | null;
+    healthScore: number | null;
+    prompting: boolean;
+    holiday: boolean;
+  }[] = [];
 
   if (!isWeekly) {
     for (let i = rangeDays - 1; i >= 0; i--) {
@@ -173,6 +181,14 @@ function InsightsPage() {
         label,
         frequency: completedWalks,
         healthScore: match ? match.health_score : null,
+        holiday,
+      });
+      dinsTrend.push({
+        date: key,
+        label,
+        dins: match ? (match.dins_percent ?? null) : null,
+        healthScore: match ? match.health_score : null,
+        prompting: !!match?.dins_prompting,
         holiday,
       });
     }
@@ -217,6 +233,20 @@ function InsightsPage() {
         healthScore: avgS,
         holiday,
       });
+      const dinsVals = bucketLogs.map((l) => l.dins_percent ?? 0);
+      const avgD =
+        dinsVals.length > 0
+          ? Math.round(dinsVals.reduce((s, v) => s + v, 0) / dinsVals.length)
+          : null;
+      const anyPrompt = bucketLogs.some((l) => !!l.dins_prompting);
+      dinsTrend.push({
+        date: startKey,
+        label,
+        dins: avgD,
+        healthScore: avgS,
+        prompting: anyPrompt,
+        holiday,
+      });
     }
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
@@ -237,7 +267,9 @@ function InsightsPage() {
   const trendXTicks = rangeDays === 30 ? fiveTicks(trend) : undefined;
   const walkXTicks = rangeDays === 30 ? fiveTicks(walkTrend) : undefined;
   const walkFreqXTicks = rangeDays === 30 ? fiveTicks(walkFreqTrend) : undefined;
+  const dinsXTicks = rangeDays === 30 ? fiveTicks(dinsTrend) : undefined;
   const maxFreq = Math.max(3, ...walkFreqTrend.map((w) => w.frequency ?? 0));
+  const maxDins = Math.max(100, ...dinsTrend.map((d) => d.dins ?? 0));
 
   // Day-of-week activity heatmap
   const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
