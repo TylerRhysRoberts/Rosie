@@ -326,3 +326,7 @@
   transform: translateY(0) !important;
   filter: blur(0) !important;
 }
+
+.fade-line .recharts-line-curve {
+  transition: stroke-opacity 200ms ease;
+}

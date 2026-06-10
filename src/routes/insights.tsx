@@ -44,6 +44,9 @@ function InsightsPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const [dinsMode, setDinsMode] = useState<"single" | "dual">("single");
+  const [walkMode, setWalkMode] = useState<"single" | "dual">("single");
+  const [freqMode, setFreqMode] = useState<"single" | "dual">("single");
 
   useEffect(() => {
     if (isLoading) return;
@@ -552,9 +555,12 @@ function InsightsPage() {
 
             {/* Dins % Eaten vs Health Score */}
             <div className="rounded-2xl bg-card border border-border p-5">
-              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
-                DINS % EATEN
-              </h2>
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  DINS % EATEN
+                </h2>
+                <ViewModeToggle value={dinsMode} onChange={setDinsMode} />
+              </div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={dinsTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
@@ -583,7 +589,8 @@ function InsightsPage() {
                       orientation="right"
                       domain={[0.5, 3.5]}
                       ticks={[1, 2, 3]}
-                      tick={<HealthDotTick />}
+                      tick={dinsMode === "dual" ? <HealthDotTick /> : false}
+                      axisLine={dinsMode === "dual"}
                       width={18}
                       tickMargin={2}
                     />
@@ -612,6 +619,9 @@ function InsightsPage() {
                       strokeWidth={3}
                       dot={false}
                       connectNulls
+                      strokeOpacity={dinsMode === "dual" ? 1 : 0}
+                      className="fade-line"
+                      isAnimationActive={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -620,9 +630,12 @@ function InsightsPage() {
 
             {/* Daily total walk duration */}
             <div className="rounded-2xl bg-card border border-border p-5">
-              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
-                Daily Total Walk Duration
-              </h2>
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  Daily Total Walk Duration
+                </h2>
+                <ViewModeToggle value={walkMode} onChange={setWalkMode} />
+              </div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={walkTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
@@ -659,7 +672,8 @@ function InsightsPage() {
                       orientation="right"
                       domain={[0.5, 3.5]}
                       ticks={[1, 2, 3]}
-                      tick={<HealthDotTick />}
+                      tick={walkMode === "dual" ? <HealthDotTick /> : false}
+                      axisLine={walkMode === "dual"}
                       width={18}
                       tickMargin={2}
                     />
@@ -693,6 +707,9 @@ function InsightsPage() {
                       strokeWidth={3}
                       dot={false}
                       connectNulls
+                      strokeOpacity={walkMode === "dual" ? 1 : 0}
+                      className="fade-line"
+                      isAnimationActive={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -701,9 +718,12 @@ function InsightsPage() {
 
             {/* Day-of-week activity heatmap */}
             <div className="rounded-2xl bg-card border border-border p-5">
-              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
-                Walk Frequency
-              </h2>
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  Walk Frequency
+                </h2>
+                <ViewModeToggle value={freqMode} onChange={setFreqMode} />
+              </div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={walkFreqTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
@@ -732,7 +752,8 @@ function InsightsPage() {
                       orientation="right"
                       domain={[0.5, 3.5]}
                       ticks={[1, 2, 3]}
-                      tick={<HealthDotTick />}
+                      tick={freqMode === "dual" ? <HealthDotTick /> : false}
+                      axisLine={freqMode === "dual"}
                       width={18}
                       tickMargin={2}
                     />
@@ -760,6 +781,9 @@ function InsightsPage() {
                       strokeWidth={3}
                       dot={false}
                       connectNulls
+                      strokeOpacity={freqMode === "dual" ? 1 : 0}
+                      className="fade-line"
+                      isAnimationActive={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -835,6 +859,31 @@ function HealthDotTick(props: any) {
   const colors: Record<number, string> = { 1: "#ef4444", 2: "#eab308", 3: "#22c55e" };
   const fill = colors[payload?.value] ?? "transparent";
   return <circle cx={(x ?? 0) + 6} cy={y ?? 0} r={4} fill={fill} />;
+}
+
+function ViewModeToggle({
+  value,
+  onChange,
+}: {
+  value: "single" | "dual";
+  onChange: (v: "single" | "dual") => void;
+}) {
+  return (
+    <div className="inline-flex shrink-0 rounded-full bg-muted p-0.5">
+      {(["single", "dual"] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange(m)}
+          className={`px-2.5 py-1 text-[10px] font-medium rounded-full transition-colors capitalize ${
+            value === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function computeHolidaySegments(data: Array<{ holiday: boolean }>): Array<{ start: number; end: number }> {
