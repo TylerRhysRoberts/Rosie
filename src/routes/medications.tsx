@@ -408,7 +408,7 @@ function DoseTrendChart({
       date: d,
       label: formatDayLabel(d),
       dose: value,
-      routineDose: isRescue ? null : value,
+      routineDose: entry ? value : null,
       rescueDose: isRescue ? value : null,
       rescueLabel: isRescue && dose ? DOSAGE_LABELS[dose] : null,
       healthScore: health[d] ?? null,
@@ -443,11 +443,10 @@ function DoseTrendChart({
             const entry = doses[d];
             if (entry) {
               const v = DOSAGE_DECIMAL[entry.dosage];
-              if (entry.is_rescue) {
-                rescueSum += v; rescueN += 1;
+            routineSum += v; routineN += 1;
+            if (entry.is_rescue) {
+              rescueSum += v; rescueN += 1;
                 lastRescueLabel = DOSAGE_LABELS[entry.dosage];
-              } else {
-                routineSum += v; routineN += 1;
               }
             }
             const h = health[d];
