@@ -572,6 +572,7 @@ function InsightsPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <ReferenceArea y1={80} y2={120} fill="rgba(134, 239, 172, 0.22)" stroke="none" />
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
