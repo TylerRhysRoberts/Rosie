@@ -152,74 +152,6 @@ export type Database = {
         }
         Relationships: []
       }
-      habit_logs: {
-        Row: {
-          created_at: string
-          date: string
-          habit_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          habit_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          habit_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "habit_logs_habit_id_fkey"
-            columns: ["habit_id"]
-            isOneToOne: false
-            referencedRelation: "habits"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      habits: {
-        Row: {
-          color: string
-          created_at: string
-          description: string
-          frequency: Json
-          id: string
-          name: string
-          position: number
-          reminder_time: string | null
-          user_id: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          description?: string
-          frequency?: Json
-          id?: string
-          name: string
-          position?: number
-          reminder_time?: string | null
-          user_id: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          description?: string
-          frequency?: Json
-          id?: string
-          name?: string
-          position?: number
-          reminder_time?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       lifetime_achievements: {
         Row: {
           achievement_id: string
@@ -244,27 +176,6 @@ export type Database = {
           progress?: Json
           unlocked_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
         }
         Relationships: []
       }
