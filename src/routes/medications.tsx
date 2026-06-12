@@ -552,31 +552,33 @@ function DoseTrendChart({
             dot={false}
             connectNulls
           />
-          <Line
-            type="monotone"
-            dataKey="rescueDose"
-            name="Rescue"
-            stroke="oklch(0.58 0.20 25)"
-            strokeWidth={0}
-            dot={(props: any) => {
-              const { cx, cy, payload, index } = props;
-              if (payload?.rescueDose == null || cx == null || cy == null) {
-                // Recharts requires a returned SVG element; render an empty group.
-                return <g key={`rescue-empty-${index}`} />;
-              }
-              return (
-                <polygon
-                  key={`rescue-${index}`}
-                  points={`${cx},${cy - 6} ${cx - 6},${cy + 5} ${cx + 6},${cy + 5}`}
-                  fill="oklch(0.58 0.20 25)"
-                  stroke="white"
-                  strokeWidth={1.5}
-                />
-              );
-            }}
-            activeDot={false}
-            isAnimationActive={false}
-          />
+          {!isWeekly && (
+            <Line
+              type="monotone"
+              dataKey="rescueDose"
+              name="Rescue"
+              stroke="oklch(0.58 0.20 25)"
+              strokeWidth={0}
+              dot={(props: any) => {
+                const { cx, cy, payload, index } = props;
+                if (payload?.rescueDose == null || cx == null || cy == null) {
+                  // Recharts requires a returned SVG element; render an empty group.
+                  return <g key={`rescue-empty-${index}`} />;
+                }
+                return (
+                  <polygon
+                    key={`rescue-${index}`}
+                    points={`${cx},${cy - 6} ${cx - 6},${cy + 5} ${cx + 6},${cy + 5}`}
+                    fill="oklch(0.58 0.20 25)"
+                    stroke="white"
+                    strokeWidth={1.5}
+                  />
+                );
+              }}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          )}
           <Line
             yAxisId="right"
             type="monotone"
