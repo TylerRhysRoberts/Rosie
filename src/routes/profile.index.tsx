@@ -437,11 +437,14 @@ function ProfilePage() {
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "var(--card)",
+                            background: "var(--popover)",
+                            color: "var(--popover-foreground)",
                             border: "1px solid var(--border)",
                             borderRadius: 12,
                             fontSize: 12,
                           }}
+                          labelStyle={{ color: "var(--popover-foreground)" }}
+                          itemStyle={{ color: "var(--popover-foreground)" }}
                           formatter={(v: any) => [`${v} kg`, "Weight"]}
                         />
                         <Line

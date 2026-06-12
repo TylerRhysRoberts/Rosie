@@ -532,10 +532,14 @@ function InsightsPage() {
                     />
                     <Tooltip
                       contentStyle={{
+                        background: "var(--popover)",
+                        color: "var(--popover-foreground)",
                         borderRadius: 12,
-                        border: "1px solid oklch(0.9 0.01 80)",
+                        border: "1px solid var(--border)",
                         fontSize: 12,
                       }}
+                      labelStyle={{ color: "var(--popover-foreground)" }}
+                      itemStyle={{ color: "var(--popover-foreground)" }}
                       formatter={(v: any) =>
                         v === null ? ["No log", "Score"] : [v, SCORE_META[v as HealthScore].label]
                       }
@@ -598,7 +602,7 @@ function InsightsPage() {
                     <Tooltip
                       contentStyle={{
                         borderRadius: 12,
-                        border: "1px solid oklch(0.9 0.01 80)",
+                        border: "1px solid var(--border)",
                         fontSize: 12,
                       }}
                       content={<DinsTooltip />}
@@ -681,7 +685,7 @@ function InsightsPage() {
                     <Tooltip
                       contentStyle={{
                         borderRadius: 12,
-                        border: "1px solid oklch(0.9 0.01 80)",
+                        border: "1px solid var(--border)",
                         fontSize: 12,
                       }}
                       content={<WalkTooltip />}
@@ -761,7 +765,7 @@ function InsightsPage() {
                     <Tooltip
                       contentStyle={{
                         borderRadius: 12,
-                        border: "1px solid oklch(0.9 0.01 80)",
+                        border: "1px solid var(--border)",
                         fontSize: 12,
                       }}
                       content={<WalkFreqTooltip />}
@@ -811,10 +815,14 @@ function InsightsPage() {
                     />
                     <Tooltip
                       contentStyle={{
+                        background: "var(--popover)",
+                        color: "var(--popover-foreground)",
                         borderRadius: 12,
-                        border: "1px solid oklch(0.9 0.01 80)",
+                        border: "1px solid var(--border)",
                         fontSize: 12,
                       }}
+                      labelStyle={{ color: "var(--popover-foreground)" }}
+                      itemStyle={{ color: "var(--popover-foreground)" }}
                       formatter={(v: any) => [`${v} min`, rangeDays === 7 ? "Walked" : "Avg"]}
                     />
                     <ReferenceLine
@@ -937,16 +945,7 @@ function WalkFreqTooltip({ active, payload, label }: any) {
   const freq = p.frequency;
   const hs = p.healthScore;
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid oklch(0.9 0.01 80)",
-        background: "white",
-        padding: "8px 10px",
-        fontSize: 12,
-        minWidth: 160,
-      }}
-    >
+    <div className="min-w-40 rounded-xl border border-border bg-popover px-2.5 py-2 text-xs text-popover-foreground shadow-md">
       <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
       <div className="text-[11px]">
         <span style={{ color: "oklch(0.72 0.16 0)" }}>● Walks:</span>{" "}
@@ -975,16 +974,7 @@ function WalkTooltip({ active, payload, label }: any) {
   const flare = p.flare;
   const rescueMeds: string[] = p.rescueMeds ?? [];
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid oklch(0.9 0.01 80)",
-        background: "white",
-        padding: "8px 10px",
-        fontSize: 12,
-        minWidth: 160,
-      }}
-    >
+    <div className="min-w-40 rounded-xl border border-border bg-popover px-2.5 py-2 text-xs text-popover-foreground shadow-md">
       <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
       <div className="text-[11px]">
         <span style={{ color: "oklch(0.6 0.11 250)" }}>● Walks:</span>{" "}
@@ -1033,16 +1023,7 @@ function DinsTooltip({ active, payload, label }: any) {
   const dins = p.dins;
   const hs = p.healthScore;
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid oklch(0.9 0.01 80)",
-        background: "white",
-        padding: "8px 10px",
-        fontSize: 12,
-        minWidth: 160,
-      }}
-    >
+    <div className="min-w-40 rounded-xl border border-border bg-popover px-2.5 py-2 text-xs text-popover-foreground shadow-md">
       <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
       <div className="text-[11px]">
         <span style={{ color: "#87CEEB" }}>● Dins:</span>{" "}

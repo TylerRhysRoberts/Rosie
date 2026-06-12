@@ -538,7 +538,7 @@ function DoseTrendChart({
           <Tooltip
             contentStyle={{
               borderRadius: 12,
-              border: "1px solid oklch(0.9 0.01 80)",
+              border: "1px solid var(--border)",
               fontSize: 12,
             }}
             content={<DoseTooltip />}
@@ -625,16 +625,7 @@ function DoseTooltip({ active, payload, label }: any) {
   const flare: FlareEvent | null = p.flare;
   const hs = p.healthScore;
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid oklch(0.9 0.01 80)",
-        background: "white",
-        padding: "8px 10px",
-        fontSize: 12,
-        minWidth: 140,
-      }}
-    >
+    <div className="min-w-35 rounded-xl border border-border bg-popover px-2.5 py-2 text-xs text-popover-foreground shadow-md">
       <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
       {p.routineDose != null && (
         <div className="text-[11px]">
