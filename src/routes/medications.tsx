@@ -481,6 +481,11 @@ function DoseTrendChart({
             .filter((l): l is string => !!l && !seen.has(l) && (seen.add(l), true));
         })()
       : undefined;
+  const weeklyTicks = isWeekly
+    ? data
+        .filter((_, index) => index % 2 === 0)
+        .map((point) => point.label)
+    : undefined;
   return (
     <div className="h-32 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -506,7 +511,9 @@ function DoseTrendChart({
           <XAxis
             dataKey="label"
             tick={{ fontSize: 9, fill: "oklch(0.55 0.02 80)" }}
-            {...(fiveTicks
+            {...(weeklyTicks
+              ? { ticks: weeklyTicks, interval: 0 as const }
+              : fiveTicks
               ? { ticks: fiveTicks, interval: 0 as const }
               : { interval: "preserveStartEnd" as const, minTickGap: 24 })}
           />
