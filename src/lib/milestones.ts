@@ -54,6 +54,12 @@ export function pickLocation(miles: number, year: number): string {
   return m ? m.locations[idx] : "";
 }
 
+/** Stable, year-scoped registry key for one annual walking milestone. */
+export function milestoneRegistryId(year: number, miles: number): string {
+  const threshold = String(miles).replace(".", "_");
+  return `${year}_milestone_${threshold}_miles`;
+}
+
 /** Indices of milestones newly crossed when miles moves from prev to next. */
 export function newlyCrossedMilestones(prevMiles: number, nextMiles: number): number[] {
   const out: number[] = [];

@@ -12,7 +12,7 @@ import {
   emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, fetchLogs, upsertLog, totalWalkMinutes,
   EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
-import { MILES_PER_MINUTE, annualMilestones, newlyCrossedMilestones, pickLocation } from "@/lib/milestones";
+import { MILES_PER_MINUTE, annualMilestones, milestoneRegistryId, pickLocation } from "@/lib/milestones";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { ACHIEVEMENTS, evaluateAchievements, type EvalCtx } from "@/lib/achievements";
 import { bumpNight, bumpLateEdit, loadMeta } from "@/lib/achievements-meta";
@@ -388,36 +388,34 @@ function LogPage() {
       }
       // Milestone check (annual walking challenge)
       try {
-        const year = new Date().getFullYear();
-        const savedYear = Number(saved.log_date.slice(0, 4));
-        if (savedYear === year) {
-          const yearStart = `${year}-01-01`;
-          const yearLogs = await fetchLogs(user.id, 400);
-          let priorMinutes = 0;
-          let nextMinutes = 0;
-          for (const l of yearLogs) {
-            if (l.log_date < yearStart) continue;
-            const mins = totalWalkMinutes(l.walks);
-            if (l.log_date === saved.log_date) {
-              // exclude saved date from prior; nextMinutes will use saved
-              continue;
-            }
-            priorMinutes += mins;
-            nextMinutes += mins;
-          }
-          nextMinutes += totalWalkMinutes(saved.walks);
-          const priorMiles = priorMinutes * MILES_PER_MINUTE;
-          const nextMiles = nextMinutes * MILES_PER_MINUTE;
-          const crossed = newlyCrossedMilestones(priorMiles, nextMiles);
-          if (crossed.length > 0) {
-            const top = crossed[crossed.length - 1];
-            const m = annualMilestones[top];
-            setMilestoneModal({
-              name: pickLocation(m.miles, year),
-              totalMiles: nextMiles,
-              year,
-            });
-          }
+        const year = Number(saved.log_date.slice(0, 4));
+        const yearStart = `${year}-01-01`;
+        const yearEnd = `${year}-12-31`;
+        const yearLogs = await fetchLogs(user.id, 4000);
+        const totalMinutes = yearLogs.reduce((sum, entry) => {
+          if (entry.log_date < yearStart || entry.log_date > yearEnd) return sum;
+          return sum + totalWalkMinutes(entry.walks);
+        }, 0);
+        const totalMiles = totalMinutes * MILES_PER_MINUTE;
+        const reached = annualMilestones.filter((milestone) => totalMiles >= milestone.miles);
+        const newlyClaimed: typeof reached = [];
+
+        for (const milestone of reached) {
+          const milestoneId = milestoneRegistryId(year, milestone.miles);
+          const { data: claimed, error } = await supabase.rpc("claim_annual_milestone", {
+            _milestone_id: milestoneId,
+          });
+          if (error) throw error;
+          if (claimed) newlyClaimed.push(milestone);
+        }
+
+        if (newlyClaimed.length > 0) {
+          const top = newlyClaimed[newlyClaimed.length - 1];
+          setMilestoneModal({
+            name: pickLocation(top.miles, year),
+            totalMiles,
+            year,
+          });
         }
       } catch (e) {
         console.error("milestone check failed", e);

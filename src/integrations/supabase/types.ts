@@ -92,6 +92,7 @@ export type Database = {
           insurance_provider: string
           insurance_renewal_date: string | null
           microchip_number: string
+          unlocked_milestones: string[]
           updated_at: string
           user_id: string
         }
@@ -103,6 +104,7 @@ export type Database = {
           insurance_provider?: string
           insurance_renewal_date?: string | null
           microchip_number?: string
+          unlocked_milestones?: string[]
           updated_at?: string
           user_id: string
         }
@@ -114,6 +116,7 @@ export type Database = {
           insurance_provider?: string
           insurance_renewal_date?: string | null
           microchip_number?: string
+          unlocked_milestones?: string[]
           updated_at?: string
           user_id?: string
         }
@@ -184,7 +187,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_annual_milestone: {
+        Args: { _milestone_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
