@@ -6,7 +6,6 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { componentTagger } from "lovable-tagger";
-import { VitePWA } from "vite-plugin-pwa";
 
 function devClientErrorLogger() {
   const VIRTUAL_ID = "virtual:dev-client-error-handler";
@@ -190,44 +189,6 @@ export default defineConfig(({ command, mode }) => {
       }),
       devClientErrorLogger(),
       devServerFnErrorLogger(),
-      VitePWA({
-        registerType: "autoUpdate",
-        devOptions: {
-          enabled: false,
-        },
-        manifest: {
-          name: "Rosie Health Hub",
-          short_name: "Rosie Health",
-          description: "Health and symptom tracker for Rosie",
-          theme_color: "#ffffff",
-          background_color: "#ffffff",
-          display: "standalone",
-          start_url: "/",
-          orientation: "portrait",
-          icons: [
-            {
-              src: "/icon-192.png",
-              sizes: "192x192",
-              type: "image/png",
-            },
-            {
-              src: "/icon-512.png",
-              sizes: "512x512",
-              type: "image/png",
-            },
-          ],
-        },
-        workbox: {
-          navigateFallbackDenylist: [/^\/~oauth/],
-          runtimeCaching: [
-            {
-              urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
-              handler: "NetworkFirst",
-              options: { cacheName: "html", networkTimeoutSeconds: 3 },
-            },
-          ],
-        },
-      }),
       ...(useCloudflare ? [cloudflare({ viteEnvironment: { name: "ssr" } })] : []),
       tanstackStart(),
       viteReact(),

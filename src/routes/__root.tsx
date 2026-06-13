@@ -70,30 +70,24 @@ function RootComponent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isInIframe = (() => {
-      try {
-        return window.self !== window.top;
-      } catch (e) {
-        return true;
+    const clearLegacyOfflineCache = async () => {
+      const hadController = Boolean(navigator.serviceWorker?.controller);
+      const registrations = await navigator.serviceWorker?.getRegistrations() ?? [];
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
       }
-    })();
 
-    const isPreviewHost =
-      window.location.hostname.includes("id-preview--") ||
-      window.location.hostname.includes("preview--") ||
-      window.location.hostname.includes("lovableproject.com") ||
-      window.location.hostname.includes("lovableproject-dev.com");
+      const reloadKey = "rosie-offline-cache-cleared";
+      if (hadController && sessionStorage.getItem(reloadKey) !== "true") {
+        sessionStorage.setItem(reloadKey, "true");
+        window.location.reload();
+      }
+    };
 
-    if (isPreviewHost || isInIframe) {
-      navigator.serviceWorker?.getRegistrations().then((registrations) => {
-        registrations.forEach((r) => r.unregister());
-      });
-      return;
-    }
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
+    clearLegacyOfflineCache().catch(() => {});
   }, []);
 
   return (
