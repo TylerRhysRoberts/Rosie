@@ -91,7 +91,10 @@ export type Database = {
           insurance_policy_number: string
           insurance_provider: string
           insurance_renewal_date: string | null
+          low_stock_threshold: number
+          medrone_stock: number
           microchip_number: string
+          probiotic_stock: number
           unlocked_milestones: string[]
           updated_at: string
           user_id: string
@@ -103,7 +106,10 @@ export type Database = {
           insurance_policy_number?: string
           insurance_provider?: string
           insurance_renewal_date?: string | null
+          low_stock_threshold?: number
+          medrone_stock?: number
           microchip_number?: string
+          probiotic_stock?: number
           unlocked_milestones?: string[]
           updated_at?: string
           user_id: string
@@ -115,7 +121,10 @@ export type Database = {
           insurance_policy_number?: string
           insurance_provider?: string
           insurance_renewal_date?: string | null
+          low_stock_threshold?: number
+          medrone_stock?: number
           microchip_number?: string
+          probiotic_stock?: number
           unlocked_milestones?: string[]
           updated_at?: string
           user_id?: string
