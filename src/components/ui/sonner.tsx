@@ -2,10 +2,11 @@ import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ swipeDirections = ["right"], ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      swipeDirections={swipeDirections}
       toastOptions={{
         classNames: {
           toast:
