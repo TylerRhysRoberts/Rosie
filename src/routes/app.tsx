@@ -46,6 +46,44 @@ const SECONDARY_MEDS = MEDICATION_NAMES.filter(
 );
 const WALK_TARGET_MIN = 45;
 
+function medicationInventoryUse(medications: DailyLog["medications"]) {
+  const medrone = medications.Medrone;
+  const probiotic = medications.Probiotic;
+  return {
+    medrone: medrone?.taken ? (medrone.dosage === "whole" ? 1 : medrone.dosage === "half" ? 0.5 : 0) : 0,
+    probiotic: probiotic?.taken && probiotic.dosage === "whole" ? 1 : 0,
+  };
+}
+
+async function deductLoggedMedicationStock(
+  userId: string,
+  medications: DailyLog["medications"],
+  previousMedications?: DailyLog["medications"],
+) {
+  const currentUse = medicationInventoryUse(medications);
+  const previousUse = previousMedications ? medicationInventoryUse(previousMedications) : { medrone: 0, probiotic: 0 };
+  const medroneDeduction = Math.max(0, currentUse.medrone - previousUse.medrone);
+  const probioticDeduction = Math.max(0, currentUse.probiotic - previousUse.probiotic);
+  if (medroneDeduction === 0 && probioticDeduction === 0) return;
+
+  const { data: inventory, error: inventoryReadError } = await supabase
+    .from("dog_profile")
+    .select("medrone_stock, probiotic_stock")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (inventoryReadError) throw inventoryReadError;
+  if (!inventory) throw new Error("Medication inventory profile not found");
+
+  const { error: inventoryUpdateError } = await supabase
+    .from("dog_profile")
+    .update({
+      medrone_stock: Math.max(0, Number(inventory.medrone_stock) - medroneDeduction),
+      probiotic_stock: Math.max(0, Number(inventory.probiotic_stock) - probioticDeduction),
+    })
+    .eq("user_id", userId);
+  if (inventoryUpdateError) throw inventoryUpdateError;
+}
+
 function LogPage() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -334,7 +372,9 @@ function LogPage() {
         ...(working.flare_event ?? EMPTY_FLARE_EVENT),
         symptoms: working.flare_up ? [...working.symptoms] : [],
       };
+      const previousLog = await fetchLogByDate(user.id, working.log_date);
       const saved = await upsertLog(user.id, { ...working, walks, flare_event });
+      await deductLoggedMedicationStock(user.id, saved.medications, previousLog?.medications);
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
       // ── Lifetime achievements evaluation ────────────────────────
