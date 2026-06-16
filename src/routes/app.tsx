@@ -113,6 +113,7 @@ function LogPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
   const [inventory, setInventory] = useState<InventoryProfile>(EMPTY_INVENTORY);
+  const [inventoryLoaded, setInventoryLoaded] = useState(false);
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
 
   const touchRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
@@ -181,7 +182,8 @@ function LogPage() {
         setInventory(inv);
         setRecentLogs(logs);
       })
-      .catch((err) => console.error("inventory load failed", err));
+      .catch((err) => console.error("inventory load failed", err))
+      .finally(() => setInventoryLoaded(true));
   }, [user]);
 
   const update = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) =>
@@ -549,7 +551,7 @@ function LogPage() {
       onTouchEnd={onTouchEnd}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
-        {isInventoryLow(inventory) && (
+        {inventoryLoaded && isInventoryLow(inventory) && (
           <div className="mb-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/15 px-3.5 py-2.5 text-warning animate-fade-up-blur">
             <PackageX className="w-4 h-4 mt-0.5 shrink-0" />
             <div className="text-xs leading-snug">
