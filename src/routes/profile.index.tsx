@@ -362,43 +362,6 @@ function ProfilePage() {
             )}
           </Card>
 
-          {/* Medication inventory */}
-          <Card>
-            <CardHeader label="Inventory Management" />
-            <div className="space-y-4">
-              <InventoryField
-                label="Medrone"
-                value={profile.medrone_stock}
-                step={0.5}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, medrone_stock: value })}
-                onBlur={(value) => saveProfile({ ...profile, medrone_stock: value })}
-              />
-              <InventoryField
-                label="Probiotic"
-                value={profile.probiotic_stock}
-                step={1}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, probiotic_stock: value })}
-                onBlur={(value) => saveProfile({ ...profile, probiotic_stock: value })}
-              />
-              <div className="border-t border-border pt-4">
-                <Field label="Low stock threshold">
-                  <InventoryNumberInput
-                    value={profile.low_stock_threshold}
-                    step={1}
-                    ariaLabel="Low stock threshold in tablets"
-                    onChange={(value) => setProfile({ ...profile, low_stock_threshold: value })}
-                    onBlur={(value) => saveProfile({ ...profile, low_stock_threshold: value })}
-                  />
-                </Field>
-              </div>
-            </div>
-            {profileSaving && (
-              <p className="mt-2 text-[10px] text-muted-foreground">Saving…</p>
-            )}
-          </Card>
-
           {/* Weight */}
           <Card>
             <CardHeader label="Weight" />
