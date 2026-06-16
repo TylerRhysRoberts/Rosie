@@ -94,9 +94,6 @@ function ProfilePage() {
             insurance_policy_number: p.data.insurance_policy_number ?? "",
             insurance_renewal_date: p.data.insurance_renewal_date,
             emergency_vet_phone: p.data.emergency_vet_phone ?? "",
-            medrone_stock: Number(p.data.medrone_stock ?? 0),
-            probiotic_stock: Number(p.data.probiotic_stock ?? 0),
-            low_stock_threshold: Number(p.data.low_stock_threshold ?? 7),
           });
         }
         if (w.data) {
@@ -128,11 +125,6 @@ function ProfilePage() {
 
   const saveProfile = async (next: DogProfile) => {
     if (!user) return;
-    const inventory = inventorySchema.safeParse(next);
-    if (!inventory.success) {
-      toast.error("Enter a valid stock level", { description: "Stock values must be between 0 and 100,000." });
-      return;
-    }
     setProfile(next);
     setProfileSaving(true);
     const { error } = await supabase
