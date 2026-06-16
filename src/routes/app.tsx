@@ -894,8 +894,17 @@ function LogPage() {
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
+                const stock = name === "Medrone" ? inventory.medrone_stock : inventory.probiotic_stock;
+                const avg = averageDailyTablets(recentLogs, name, 30);
                 return (
-                  <MedRow key={name} name={name} med={med} setMed={setMed} />
+                  <MedRow
+                    key={name}
+                    name={name}
+                    med={med}
+                    setMed={setMed}
+                    inventoryStock={stock}
+                    avgDailyTablets={avg}
+                  />
                 );
               })}
               {showMoreMeds && SECONDARY_MEDS.map((name) => {
