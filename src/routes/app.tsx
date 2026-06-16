@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun, Calendar as CalendarIcon, ChevronLeft, ChevronRight, PackageX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -18,6 +18,13 @@ import { ACHIEVEMENTS, evaluateAchievements, type EvalCtx } from "@/lib/achievem
 import { bumpNight, bumpLateEdit, loadMeta } from "@/lib/achievements-meta";
 import { useNotificationQueue } from "@/components/NotificationQueueProvider";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  EMPTY_INVENTORY,
+  InventoryProfile,
+  averageDailyTablets,
+  fetchInventory,
+  isInventoryLow,
+} from "@/lib/inventory";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -45,6 +52,11 @@ const SECONDARY_MEDS = MEDICATION_NAMES.filter(
   (n) => !(PRIMARY_MEDS as readonly string[]).includes(n),
 );
 const WALK_TARGET_MIN = 45;
+
+function formatTabletCount(n: number): string {
+  if (Number.isInteger(n)) return String(n);
+  return (Math.round(n * 10) / 10).toFixed(1);
+}
 
 function medicationInventoryUse(medications: DailyLog["medications"]) {
   const medrone = medications.Medrone;
@@ -100,6 +112,9 @@ function LogPage() {
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
+  const [inventory, setInventory] = useState<InventoryProfile>(EMPTY_INVENTORY);
+  const [inventoryLoaded, setInventoryLoaded] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
 
   const touchRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
 
@@ -159,6 +174,17 @@ function LogPage() {
       })
       .finally(() => setMounted(true));
   }, [user, authLoading, date, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([fetchInventory(user.id), fetchLogs(user.id, 30)])
+      .then(([inv, logs]) => {
+        setInventory(inv);
+        setRecentLogs(logs);
+      })
+      .catch((err) => console.error("inventory load failed", err))
+      .finally(() => setInventoryLoaded(true));
+  }, [user]);
 
   const update = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) =>
     setLog((prev) => ({ ...prev, [key]: value }));
@@ -376,7 +402,24 @@ function LogPage() {
       const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       await deductLoggedMedicationStock(user.id, saved.medications, previousLog?.medications);
       setLog(saved);
-      toast.success("Log saved", { description: "Your daily entry has been recorded." });
+      // Refresh inventory + recent logs (averages will update).
+      let nextInventory = inventory;
+      try {
+        nextInventory = await fetchInventory(user.id);
+        setInventory(nextInventory);
+        const refreshed = await fetchLogs(user.id, 30);
+        setRecentLogs(refreshed);
+      } catch (e) {
+        console.error("inventory refresh failed", e);
+      }
+      const lowMeds: string[] = [];
+      if (nextInventory.medrone_stock <= nextInventory.low_stock_threshold) lowMeds.push("Medrone");
+      if (nextInventory.probiotic_stock <= nextInventory.low_stock_threshold) lowMeds.push("Probiotic");
+      const baseMessage = "Your daily entry has been recorded.";
+      const description = lowMeds.length > 0
+        ? `${baseMessage} ⚠️ Note: ${lowMeds.join(" & ")} stock is low!`
+        : baseMessage;
+      toast.success("Log saved", { description });
       // ── Lifetime achievements evaluation ────────────────────────
       try {
         // Update ambient meta counters (night log / late edit).
@@ -508,6 +551,20 @@ function LogPage() {
       onTouchEnd={onTouchEnd}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
+        {inventoryLoaded && isInventoryLow(inventory) && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/15 px-3.5 py-2.5 text-warning animate-fade-up-blur">
+            <PackageX className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="text-xs leading-snug">
+              <p className="font-semibold uppercase tracking-wider">Medication stock low</p>
+              <p className="mt-0.5">
+                {[
+                  inventory.medrone_stock <= inventory.low_stock_threshold ? `Medrone ${formatTabletCount(inventory.medrone_stock)}` : null,
+                  inventory.probiotic_stock <= inventory.low_stock_threshold ? `Probiotic ${formatTabletCount(inventory.probiotic_stock)}` : null,
+                ].filter(Boolean).join(" · ")} tablets remaining.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
@@ -839,8 +896,17 @@ function LogPage() {
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
+                const stock = name === "Medrone" ? inventory.medrone_stock : inventory.probiotic_stock;
+                const avg = averageDailyTablets(recentLogs, name, 30);
                 return (
-                  <MedRow key={name} name={name} med={med} setMed={setMed} />
+                  <MedRow
+                    key={name}
+                    name={name}
+                    med={med}
+                    setMed={setMed}
+                    inventoryStock={stock}
+                    avgDailyTablets={avg}
+                  />
                 );
               })}
               {showMoreMeds && SECONDARY_MEDS.map((name) => {
@@ -1158,12 +1224,27 @@ function MedRow({
   med,
   setMed,
   onRemove,
+  inventoryStock,
+  avgDailyTablets: avg,
 }: {
   name: string;
   med: { taken: boolean; dosage: string; is_rescue?: boolean };
   setMed: (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => void;
   onRemove?: () => void;
+  inventoryStock?: number;
+  avgDailyTablets?: number;
 }) {
+  const showInventory = inventoryStock !== undefined;
+  const stockLabel = showInventory
+    ? (() => {
+        const count = formatTabletCount(inventoryStock!);
+        if ((avg ?? 0) > 0) {
+          const days = Math.floor(inventoryStock! / avg!);
+          return `${count} tablets (~${days} days left)`;
+        }
+        return `${count} tablets`;
+      })()
+    : null;
   return (
     <div className="px-4 py-3">
       <div className="flex items-center gap-3">
@@ -1189,8 +1270,13 @@ function MedRow({
           </button>
         )}
       </div>
-      {med.taken && (
-        <label className="mt-2 flex items-center justify-end gap-2 cursor-pointer select-none">
+      {(med.taken || showInventory) && (
+        <div className="mt-2 flex items-center justify-between gap-3">
+          {stockLabel ? (
+            <span className="text-[11px] text-muted-foreground tabular-nums">{stockLabel}</span>
+          ) : <span />}
+          {med.taken ? (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
           <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
             Rescue dose
           </span>
@@ -1200,7 +1286,9 @@ function MedRow({
             onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
             className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
           />
-        </label>
+            </label>
+          ) : <span />}
+        </div>
       )}
     </div>
   );

@@ -1,11 +1,9 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { Badge } from "@/components/ui/badge";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
   Copy, Phone, ChevronDown, ChevronUp, Check, Trash2, Stethoscope, Trophy,
@@ -34,16 +32,7 @@ interface DogProfile {
   insurance_policy_number: string;
   insurance_renewal_date: string | null;
   emergency_vet_phone: string;
-  medrone_stock: number;
-  probiotic_stock: number;
-  low_stock_threshold: number;
 }
-
-const inventorySchema = z.object({
-  medrone_stock: z.number().finite().min(0).max(100000),
-  probiotic_stock: z.number().finite().min(0).max(100000),
-  low_stock_threshold: z.number().finite().min(0).max(100000),
-});
 
 const EMPTY_PROFILE: DogProfile = {
   microchip_number: "",
@@ -51,9 +40,6 @@ const EMPTY_PROFILE: DogProfile = {
   insurance_policy_number: "",
   insurance_renewal_date: null,
   emergency_vet_phone: "",
-  medrone_stock: 0,
-  probiotic_stock: 0,
-  low_stock_threshold: 7,
 };
 
 interface WeightEntry {
@@ -108,9 +94,6 @@ function ProfilePage() {
             insurance_policy_number: p.data.insurance_policy_number ?? "",
             insurance_renewal_date: p.data.insurance_renewal_date,
             emergency_vet_phone: p.data.emergency_vet_phone ?? "",
-            medrone_stock: Number(p.data.medrone_stock ?? 0),
-            probiotic_stock: Number(p.data.probiotic_stock ?? 0),
-            low_stock_threshold: Number(p.data.low_stock_threshold ?? 7),
           });
         }
         if (w.data) {
@@ -142,11 +125,6 @@ function ProfilePage() {
 
   const saveProfile = async (next: DogProfile) => {
     if (!user) return;
-    const inventory = inventorySchema.safeParse(next);
-    if (!inventory.success) {
-      toast.error("Enter a valid stock level", { description: "Stock values must be between 0 and 100,000." });
-      return;
-    }
     setProfile(next);
     setProfileSaving(true);
     const { error } = await supabase
@@ -384,43 +362,6 @@ function ProfilePage() {
             )}
           </Card>
 
-          {/* Medication inventory */}
-          <Card>
-            <CardHeader label="Inventory Management" />
-            <div className="space-y-4">
-              <InventoryField
-                label="Medrone"
-                value={profile.medrone_stock}
-                step={0.5}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, medrone_stock: value })}
-                onBlur={(value) => saveProfile({ ...profile, medrone_stock: value })}
-              />
-              <InventoryField
-                label="Probiotic"
-                value={profile.probiotic_stock}
-                step={1}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, probiotic_stock: value })}
-                onBlur={(value) => saveProfile({ ...profile, probiotic_stock: value })}
-              />
-              <div className="border-t border-border pt-4">
-                <Field label="Low stock threshold">
-                  <InventoryNumberInput
-                    value={profile.low_stock_threshold}
-                    step={1}
-                    ariaLabel="Low stock threshold in tablets"
-                    onChange={(value) => setProfile({ ...profile, low_stock_threshold: value })}
-                    onBlur={(value) => saveProfile({ ...profile, low_stock_threshold: value })}
-                  />
-                </Field>
-              </div>
-            </div>
-            {profileSaving && (
-              <p className="mt-2 text-[10px] text-muted-foreground">Saving…</p>
-            )}
-          </Card>
-
           {/* Weight */}
           <Card>
             <CardHeader label="Weight" />
@@ -642,85 +583,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="block text-[10px] text-muted-foreground mb-1">{label}</label>
       {children}
-    </div>
-  );
-}
-
-type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
-
-function getStockStatus(stock: number, threshold: number): StockStatus {
-  if (stock <= 0) return "Out of Stock";
-  if (stock <= threshold) return "Low Stock";
-  return "In Stock";
-}
-
-function InventoryField({
-  label,
-  value,
-  step,
-  threshold,
-  onChange,
-  onBlur,
-}: {
-  label: string;
-  value: number;
-  step: number;
-  threshold: number;
-  onChange: (value: number) => void;
-  onBlur: (value: number) => void;
-}) {
-  const status = getStockStatus(value, threshold);
-  const statusClass = status === "In Stock"
-    ? "border-success/30 bg-success/15 text-success"
-    : status === "Low Stock"
-      ? "border-warning/30 bg-warning/15 text-warning"
-      : "border-destructive/30 bg-destructive/15 text-destructive";
-
-  return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between gap-3">
-        <label className="text-xs font-medium text-foreground" htmlFor={`inventory-${label.toLowerCase()}`}>
-          {label}
-        </label>
-        <Badge variant="outline" className={statusClass}>{status}</Badge>
-      </div>
-      <InventoryNumberInput id={`inventory-${label.toLowerCase()}`} value={value} step={step}
-        ariaLabel={`${label} stock in tablets`} onChange={onChange} onBlur={onBlur} />
-    </div>
-  );
-}
-
-function InventoryNumberInput({ id, value, step, ariaLabel, onChange, onBlur }: {
-  id?: string;
-  value: number;
-  step: number;
-  ariaLabel: string;
-  onChange: (value: number) => void;
-  onBlur: (value: number) => void;
-}) {
-  const [draft, setDraft] = useState(String(value));
-  useEffect(() => setDraft(String(value)), [value]);
-
-  return (
-    <div className="relative">
-      <input id={id} type="number" inputMode="decimal" min="0" max="100000" step={step} value={draft}
-        onChange={(event) => {
-          const raw = event.currentTarget.value;
-          setDraft(raw);
-          if (raw === "") return;
-          const parsed = Number(raw);
-          if (Number.isFinite(parsed)) onChange(parsed);
-        }}
-        onBlur={() => {
-          const parsed = draft === "" ? 0 : Number(draft);
-          const nextValue = Number.isFinite(parsed) ? parsed : value;
-          setDraft(String(nextValue));
-          onChange(nextValue);
-          onBlur(nextValue);
-        }}
-        aria-label={ariaLabel}
-        className="w-full rounded-xl border border-border bg-muted px-3.5 py-2.5 pr-20 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
-      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">tablets</span>
     </div>
   );
 }

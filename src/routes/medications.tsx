@@ -8,9 +8,16 @@ import {
   DosageSize,
   FlareEvent,
 } from "@/lib/daily-logs";
-import { Pill } from "lucide-react";
+import { Pill, ChevronDown } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
+import { InventoryConfig } from "@/components/InventoryConfig";
+import {
+  EMPTY_INVENTORY,
+  InventoryProfile,
+  fetchInventory,
+  isInventoryLow,
+} from "@/lib/inventory";
 import {
   LineChart,
   Line,
@@ -76,6 +83,8 @@ function MedicationsPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const [inventory, setInventory] = useState<InventoryProfile>(EMPTY_INVENTORY);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   const trackRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const syncScroll = (source: HTMLDivElement) => {
@@ -90,8 +99,11 @@ function MedicationsPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!user) { navigate({ to: "/login" }); return; }
-    fetchLogs(user.id, 180)
-      .then(setLogs)
+    Promise.all([fetchLogs(user.id, 180), fetchInventory(user.id)])
+      .then(([l, inv]) => {
+        setLogs(l);
+        setInventory(inv);
+      })
       .catch(console.error)
       .finally(() => setMounted(true));
   }, [user, isLoading, navigate]);
@@ -212,6 +224,34 @@ function MedicationsPage() {
             ))}
           </div>
         </div>
+
+        {/* Inventory banner + collapsible config */}
+        {user && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setInventoryOpen((v) => !v)}
+              aria-expanded={inventoryOpen}
+              className={`w-full flex items-center justify-between gap-3 rounded-full px-4 py-2.5 text-sm font-semibold tracking-wide uppercase transition-colors ${
+                isInventoryLow(inventory)
+                  ? "bg-destructive text-destructive-foreground"
+                  : "bg-primary text-primary-foreground"
+              }`}
+            >
+              <span>View Inventory</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${inventoryOpen ? "rotate-180" : ""}`} />
+            </button>
+            {inventoryOpen && (
+              <div className="mt-2 rounded-2xl bg-primary/15 border border-primary/30 p-4 animate-fade-up-blur">
+                <InventoryConfig
+                  userId={user.id}
+                  inventory={inventory}
+                  onChange={setInventory}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {meds.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-16 text-muted-foreground">
