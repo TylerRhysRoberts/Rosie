@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun, Calendar as CalendarIcon, ChevronLeft, ChevronRight, PackageX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
@@ -18,6 +18,13 @@ import { ACHIEVEMENTS, evaluateAchievements, type EvalCtx } from "@/lib/achievem
 import { bumpNight, bumpLateEdit, loadMeta } from "@/lib/achievements-meta";
 import { useNotificationQueue } from "@/components/NotificationQueueProvider";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  EMPTY_INVENTORY,
+  InventoryProfile,
+  averageDailyTablets,
+  fetchInventory,
+  isInventoryLow,
+} from "@/lib/inventory";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
