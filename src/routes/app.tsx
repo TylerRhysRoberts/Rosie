@@ -1066,6 +1066,64 @@ function LogPage() {
         year={milestoneModal?.year ?? new Date().getFullYear()}
         onClose={() => setMilestoneModal(null)}
       />
+      <Dialog
+        open={customDialog !== null}
+        onOpenChange={(open) => { if (!open) setCustomDialog(null); }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {customDialog === "symptom" && "Add custom symptom"}
+              {customDialog === "treat" && "Add custom treat"}
+              {customDialog === "scavenged" && "Add custom item"}
+              {customDialog === "med" && "Add custom medication"}
+            </DialogTitle>
+          </DialogHeader>
+          <input
+            autoFocus
+            type="text"
+            value={customDraft}
+            onChange={(e) => setCustomDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const v = customDraft;
+                if (customDialog === "symptom") addCustomSymptom(v);
+                else if (customDialog === "treat") addCustomTo("treats", v);
+                else if (customDialog === "scavenged") addCustomTo("scavenged", v);
+                else if (customDialog === "med") addCustomMed(v);
+                setCustomDraft("");
+                setCustomDialog(null);
+              }
+            }}
+            placeholder="Enter name…"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => { setCustomDraft(""); setCustomDialog(null); }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-muted/70"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const v = customDraft;
+                if (customDialog === "symptom") addCustomSymptom(v);
+                else if (customDialog === "treat") addCustomTo("treats", v);
+                else if (customDialog === "scavenged") addCustomTo("scavenged", v);
+                else if (customDialog === "med") addCustomMed(v);
+                setCustomDraft("");
+                setCustomDialog(null);
+              }}
+              disabled={!customDraft.trim()}
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <BottomNav />
     </div>
   );
@@ -1102,27 +1160,17 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-function CustomAdd({
-  value, onChange, onAdd, placeholder,
-}: { value: string; onChange: (v: string) => void; onAdd: () => void; placeholder: string }) {
+function HeaderAddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <div className="mt-2 flex gap-2">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAdd(); } }}
-        placeholder={placeholder}
-        className="flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-      />
-      <button
-        onClick={onAdd}
-        className="px-3 rounded-xl bg-muted text-foreground text-sm font-medium hover:bg-muted/70 active:scale-95"
-        aria-label="Add"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted active:scale-90 transition-all"
+    >
+      <Plus className="w-4 h-4" />
+    </button>
   );
 }
 
