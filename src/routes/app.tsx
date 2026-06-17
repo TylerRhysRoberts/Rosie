@@ -108,10 +108,8 @@ function LogPage() {
   const [log, setLog] = useState<DailyLog>(emptyLog());
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [customSymptom, setCustomSymptom] = useState("");
-  const [customTreat, setCustomTreat] = useState("");
-  const [customScavenged, setCustomScavenged] = useState("");
-  const [customMed, setCustomMed] = useState("");
+  const [customDialog, setCustomDialog] = useState<null | "symptom" | "treat" | "scavenged" | "med">(null);
+  const [customDraft, setCustomDraft] = useState("");
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
