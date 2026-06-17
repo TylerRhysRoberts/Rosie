@@ -1274,9 +1274,16 @@ function MedRow({
       })()
     : null;
   return (
-    <div className="px-4 py-3">
+    <div className="px-4 py-2.5">
       <div className="flex items-center gap-3">
-        <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-foreground leading-tight">{name}</div>
+          {stockLabel && (
+            <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums leading-tight">
+              {stockLabel}
+            </div>
+          )}
+        </div>
         <select
           value={med.dosage}
           onChange={(e) => setMed(name, { dosage: e.target.value })}
@@ -1298,13 +1305,9 @@ function MedRow({
           </button>
         )}
       </div>
-      {(med.taken || showInventory) && (
-        <div className="mt-2 flex items-center justify-between gap-3">
-          {stockLabel ? (
-            <span className="text-[11px] text-muted-foreground tabular-nums">{stockLabel}</span>
-          ) : <span />}
-          {med.taken ? (
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+      {med.taken && (
+        <div className="mt-1.5 flex items-center justify-end gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
           <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
             Rescue dose
           </span>
@@ -1314,8 +1317,7 @@ function MedRow({
             onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
             className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
           />
-            </label>
-          ) : <span />}
+          </label>
         </div>
       )}
     </div>
