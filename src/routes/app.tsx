@@ -872,7 +872,7 @@ function LogPage() {
           )}
 
           {/* 5. Care & activities */}
-          <Section label="Medications">
+          <Section label="Medications" action={<HeaderAddButton label="Add custom medication" onClick={() => { setCustomDraft(""); setCustomDialog("med"); }} />}>
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
@@ -916,47 +916,44 @@ function LogPage() {
                 );
               })}
             </div>
-            <CustomAdd
-              value={customMed}
-              onChange={setCustomMed}
-              onAdd={addCustomMed}
-              placeholder="Add custom medication…"
-            />
           </Section>
 
-          <Section label="Location">
-            <select
-              value={log.location ?? ""}
-              onChange={(e) => update("location", e.target.value || null)}
-              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
-            >
-              <option value="">Select location…</option>
-              {LOCATION_OPTIONS.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-          </Section>
-
-          {!log.holiday_mode && (
-          <Section label="Routine Type">
-            <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
-              {(["routine", "non_routine"] as const).map((r) => {
-                const active = log.routine_type === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => update("routine_type", r)}
-                    className={`py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${
-                      active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-                    }`}
-                  >
-                    {r === "routine" ? "Routine Day (Work)" : "Non-Routine Day (Off)"}
-                  </button>
-                );
-              })}
+          <Section label="Location & Routine">
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={log.location ?? ""}
+                onChange={(e) => update("location", e.target.value || null)}
+                className="col-span-1 min-w-0 w-full px-3 py-3 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <option value="">Location…</option>
+                {LOCATION_OPTIONS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+              {log.holiday_mode ? (
+                <div className="col-span-2 flex items-center justify-center rounded-xl bg-muted border border-dashed border-border text-[12px] text-muted-foreground px-3 py-3">
+                  Routine paused during holiday mode
+                </div>
+              ) : (
+                <div className="col-span-2 grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
+                  {(["routine", "non_routine"] as const).map((r) => {
+                    const active = log.routine_type === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => update("routine_type", r)}
+                        className={`py-2.5 rounded-xl text-xs font-medium transition-all active:scale-95 ${
+                          active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        {r === "routine" ? "Routine (Work)" : "Non-Routine (Off)"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </Section>
-          )}
 
           {!log.holiday_mode && (
           <Section
