@@ -602,7 +602,7 @@ function LogPage() {
                   value={date}
                   max={todayKey()}
                   onChange={(e) => setDate(e.target.value)}
-                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base text-center [&::-webkit-date-and-time-value]:text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <CalendarIcon className="w-5 h-5 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -920,16 +920,19 @@ function LogPage() {
 
           <Section label="Location & Routine">
             <div className="grid grid-cols-3 gap-2">
-              <select
-                value={log.location ?? ""}
-                onChange={(e) => update("location", e.target.value || null)}
-                className="col-span-1 min-w-0 w-full px-3 py-3 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-              >
-                <option value="">Location…</option>
-                {LOCATION_OPTIONS.map((l) => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
+              <div className="col-span-1 min-w-0 relative">
+                <select
+                  value={log.location ?? ""}
+                  onChange={(e) => update("location", e.target.value || null)}
+                  className="appearance-none [-webkit-appearance:none] w-full pl-3 pr-9 py-3 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  <option value="" disabled hidden>Location…</option>
+                  {LOCATION_OPTIONS.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
               {log.holiday_mode ? (
                 <div className="col-span-2 flex items-center justify-center rounded-xl bg-muted border border-dashed border-border text-[12px] text-muted-foreground px-3 py-3">
                   Routine paused during holiday mode
@@ -1070,7 +1073,7 @@ function LogPage() {
         open={customDialog !== null}
         onOpenChange={(open) => { if (!open) setCustomDialog(null); }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-b-0 sm:max-w-sm sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>
               {customDialog === "symptom" && "Add custom symptom"}
