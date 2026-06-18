@@ -1073,7 +1073,7 @@ function LogPage() {
         open={customDialog !== null}
         onOpenChange={(open) => { if (!open) setCustomDialog(null); }}
       >
-        <DialogContent className="max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-b-0 sm:max-w-sm sm:rounded-lg">
+        <DialogContent className="max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-b-0 max-sm:pb-12 sm:max-w-sm sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>
               {customDialog === "symptom" && "Add custom symptom"}
@@ -1100,6 +1100,9 @@ function LogPage() {
               }
             }}
             placeholder="Enter name…"
+            autoComplete="off"
+            data-1password-ignore="true"
+            data-lpignore="true"
             className="w-full px-3.5 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <DialogFooter>
