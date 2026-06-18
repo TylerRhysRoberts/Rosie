@@ -1073,7 +1073,7 @@ function LogPage() {
         open={customDialog !== null}
         onOpenChange={(open) => { if (!open) setCustomDialog(null); }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-b-0 sm:max-w-sm sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>
               {customDialog === "symptom" && "Add custom symptom"}
