@@ -44,7 +44,9 @@ function InsightsPage() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [rangeDays, setRangeDays] = useState<7 | 30 | 90 | "calendar">(7);
+  const [rangeView, setRangeView] = useState<7 | 30 | 90 | "calendar">(7);
+  const isCalendar = rangeView === "calendar";
+  const rangeDays: 7 | 30 | 90 = isCalendar ? 7 : rangeView;
   const [dinsMode, setDinsMode] = useState<"single" | "dual">("single");
   const [walkMode, setWalkMode] = useState<"single" | "dual">("single");
   const [freqMode, setFreqMode] = useState<"single" | "dual">("single");
