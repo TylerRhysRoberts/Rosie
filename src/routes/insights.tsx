@@ -10,9 +10,10 @@ import {
   HealthScore,
 } from "@/lib/daily-logs";
 import { SYMPTOM_OPTIONS } from "@/lib/daily-logs";
-import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck, MapPin } from "lucide-react";
+import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck, MapPin, CalendarDays } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
+import { CalendarView } from "@/components/CalendarView";
 import {
   LineChart,
   Line,
@@ -43,7 +44,7 @@ function InsightsPage() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const [rangeDays, setRangeDays] = useState<7 | 30 | 90 | "calendar">(7);
   const [dinsMode, setDinsMode] = useState<"single" | "dual">("single");
   const [walkMode, setWalkMode] = useState<"single" | "dual">("single");
   const [freqMode, setFreqMode] = useState<"single" | "dual">("single");
