@@ -332,9 +332,9 @@ function InsightsPage() {
           {([7, 30, 90] as const).map((d) => (
             <button
               key={d}
-              onClick={() => setRangeDays(d)}
+              onClick={() => setRangeView(d)}
               className={`flex-1 text-sm font-medium py-2 rounded-full transition-colors ${
-                rangeDays === d
+                rangeView === d
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground"
               }`}
@@ -342,9 +342,36 @@ function InsightsPage() {
               {d} Days
             </button>
           ))}
+          <button
+            key="cal"
+            aria-label="Calendar view"
+            onClick={() => setRangeView("calendar")}
+            className={`flex items-center justify-center px-3 py-2 rounded-full transition-colors ${
+              isCalendar ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+          </button>
         </div>
 
-        {logs.length === 0 ? (
+        {isCalendar ? (
+          user ? (
+            <div className="mt-6">
+              <CalendarView
+                userId={user.id}
+                metrics={[
+                  "flareups",
+                  "symptoms",
+                  "dins",
+                  "stool",
+                  "walk_freq",
+                  "walk_duration",
+                  "health",
+                ]}
+              />
+            </div>
+          ) : null
+        ) : logs.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="mt-6 space-y-4">
