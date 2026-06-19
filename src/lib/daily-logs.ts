@@ -191,6 +191,22 @@ export async function fetchLogs(userId: string, limitDays = 180): Promise<DailyL
   return (data ?? []).map(rowToLog);
 }
 
+export async function fetchLogsRange(
+  userId: string,
+  startDate: string,
+  endDate: string,
+): Promise<DailyLog[]> {
+  const { data, error } = await supabase
+    .from("daily_logs")
+    .select("*")
+    .eq("user_id", userId)
+    .gte("log_date", startDate)
+    .lte("log_date", endDate)
+    .order("log_date", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToLog);
+}
+
 export async function fetchLogByDate(userId: string, date: string): Promise<DailyLog | null> {
   const { data, error } = await supabase
     .from("daily_logs")

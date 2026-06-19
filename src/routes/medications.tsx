@@ -8,10 +8,11 @@ import {
   DosageSize,
   FlareEvent,
 } from "@/lib/daily-logs";
-import { Pill, ChevronDown } from "lucide-react";
+import { Pill, ChevronDown, CalendarDays } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
 import { InventoryConfig } from "@/components/InventoryConfig";
+import { CalendarView } from "@/components/CalendarView";
 import {
   EMPTY_INVENTORY,
   InventoryProfile,
@@ -82,7 +83,7 @@ function MedicationsPage() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const [rangeDays, setRangeDays] = useState<7 | 30 | 90 | "calendar">(7);
   const [inventory, setInventory] = useState<InventoryProfile>(EMPTY_INVENTORY);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const trackRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -111,6 +112,7 @@ function MedicationsPage() {
   // Build list of days within range (oldest -> newest)
   const days = useMemo(() => {
     const arr: string[] = [];
+    if (rangeDays === "calendar") return arr;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const span = rangeDays === 7 ? 7 : rangeDays;
@@ -222,6 +224,18 @@ function MedicationsPage() {
                 {n} Days
               </button>
             ))}
+            <button
+              key="cal"
+              aria-label="Calendar view"
+              onClick={() => setRangeDays("calendar")}
+              className={`flex items-center justify-center px-3 py-2 rounded-full transition-colors ${
+                rangeDays === "calendar"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -253,7 +267,13 @@ function MedicationsPage() {
           </div>
         )}
 
-        {meds.length === 0 ? (
+        {rangeDays === "calendar" ? (
+          user ? (
+            <div className="mt-1">
+              <CalendarView userId={user.id} metrics={["medrone", "probiotic"]} />
+            </div>
+          ) : null
+        ) : meds.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-16 text-muted-foreground">
             <Pill className="w-10 h-10 mb-3 opacity-40" />
             <p className="text-sm">No medication history yet.</p>

@@ -10,9 +10,10 @@ import {
   HealthScore,
 } from "@/lib/daily-logs";
 import { SYMPTOM_OPTIONS } from "@/lib/daily-logs";
-import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck, MapPin } from "lucide-react";
+import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck, MapPin, CalendarDays } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
+import { CalendarView } from "@/components/CalendarView";
 import {
   LineChart,
   Line,
@@ -43,7 +44,9 @@ function InsightsPage() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(7);
+  const [rangeView, setRangeView] = useState<7 | 30 | 90 | "calendar">(7);
+  const isCalendar = rangeView === "calendar";
+  const rangeDays: 7 | 30 | 90 = isCalendar ? 7 : rangeView;
   const [dinsMode, setDinsMode] = useState<"single" | "dual">("single");
   const [walkMode, setWalkMode] = useState<"single" | "dual">("single");
   const [freqMode, setFreqMode] = useState<"single" | "dual">("single");
@@ -329,9 +332,9 @@ function InsightsPage() {
           {([7, 30, 90] as const).map((d) => (
             <button
               key={d}
-              onClick={() => setRangeDays(d)}
+              onClick={() => setRangeView(d)}
               className={`flex-1 text-sm font-medium py-2 rounded-full transition-colors ${
-                rangeDays === d
+                rangeView === d
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground"
               }`}
@@ -339,9 +342,36 @@ function InsightsPage() {
               {d} Days
             </button>
           ))}
+          <button
+            key="cal"
+            aria-label="Calendar view"
+            onClick={() => setRangeView("calendar")}
+            className={`flex items-center justify-center px-3 py-2 rounded-full transition-colors ${
+              isCalendar ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+          </button>
         </div>
 
-        {logs.length === 0 ? (
+        {isCalendar ? (
+          user ? (
+            <div className="mt-6">
+              <CalendarView
+                userId={user.id}
+                metrics={[
+                  "flareups",
+                  "symptoms",
+                  "dins",
+                  "stool",
+                  "walk_freq",
+                  "walk_duration",
+                  "health",
+                ]}
+              />
+            </div>
+          ) : null
+        ) : logs.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="mt-6 space-y-4">
