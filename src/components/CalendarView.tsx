@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import {
-  DailyLog,
-  fetchLogsRange,
-  DOSAGE_LABELS,
-} from "@/lib/daily-logs";
+import { DailyLog, fetchLogsRange } from "@/lib/daily-logs";
 
 export type CalendarMetricKey =
   | "medrone"
@@ -17,16 +13,18 @@ export type CalendarMetricKey =
   | "walk_duration"
   | "health";
 
+type CellValue = {
+  intensity: number; // 0..1
+  display: string; // raw value text shown inside the cell ("" = empty)
+  hasData: boolean;
+};
+
 type MetricDef = {
   key: CalendarMetricKey;
   label: string;
-  color: string; // CSS color for dot
-  getTier: (log: DailyLog) => 0 | 1 | 2;
-  describe?: (log: DailyLog) => string;
+  binary?: boolean; // flare-ups use destructive binary toggle
+  getValue: (log: DailyLog) => CellValue;
 };
-
-const PRIMARY = "var(--primary)";
-const DESTRUCTIVE = "var(--destructive)";
 
 function safeCompletedWalks(walks: unknown): number {
   try {
@@ -51,116 +49,141 @@ function totalWalkMins(walks: unknown): number {
   }
 }
 
+function dosageNumeric(d: string | undefined): number {
+  switch (d) {
+    case "whole": return 1;
+    case "half": return 0.5;
+    case "third": return 1 / 3;
+    case "quarter": return 0.25;
+    case "eighth": return 0.125;
+    default: return 0;
+  }
+}
+
+function dosageDisplay(n: number): string {
+  if (n === 1) return "1";
+  if (n === 0.5) return "½";
+  if (Math.abs(n - 1 / 3) < 0.01) return "⅓";
+  if (n === 0.25) return "¼";
+  if (n === 0.125) return "⅛";
+  return n.toString();
+}
+
 const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
   medrone: {
     key: "medrone",
     label: "Medrone",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const m = log.medications?.["Medrone"];
-      if (!m?.taken) return 0;
-      return m.is_rescue ? 2 : 1;
-    },
-    describe: (log) => {
-      const m = log.medications?.["Medrone"];
-      if (!m?.taken) return "Not taken";
-      return `${DOSAGE_LABELS[m.dosage]}${m.is_rescue ? " (Rescue)" : ""}`;
+      if (!m?.taken) return { intensity: 0, display: "", hasData: false };
+      const n = dosageNumeric(m.dosage);
+      return {
+        intensity: m.is_rescue ? 1 : Math.min(1, n),
+        display: dosageDisplay(n),
+        hasData: true,
+      };
     },
   },
   probiotic: {
     key: "probiotic",
     label: "Probiotic",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const m = log.medications?.["Probiotic"];
-      if (!m?.taken) return 0;
-      return m.is_rescue ? 2 : 1;
-    },
-    describe: (log) => {
-      const m = log.medications?.["Probiotic"];
-      if (!m?.taken) return "Not taken";
-      return `${DOSAGE_LABELS[m.dosage]}${m.is_rescue ? " (Rescue)" : ""}`;
+      if (!m?.taken) return { intensity: 0, display: "", hasData: false };
+      const n = dosageNumeric(m.dosage);
+      return {
+        intensity: m.is_rescue ? 1 : Math.min(1, n),
+        display: dosageDisplay(n),
+        hasData: true,
+      };
     },
   },
   flareups: {
     key: "flareups",
     label: "Flare-ups",
-    color: DESTRUCTIVE,
-    getTier: (log) => (log.flare_up || log.flare_event?.had_flareup ? 2 : 0),
-    describe: (log) => (log.flare_up ? "Flare-up logged" : "No flare-up"),
+    binary: true,
+    getValue: (log) => {
+      const yes = !!(log.flare_up || log.flare_event?.had_flareup);
+      return { intensity: yes ? 1 : 0, display: yes ? "Yes" : "No", hasData: true };
+    },
   },
   symptoms: {
     key: "symptoms",
     label: "Symptoms",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const count = (log.symptoms || []).filter((s) => s !== "No Issues").length;
-      if (count === 0) return 0;
-      return count >= 2 ? 2 : 1;
-    },
-    describe: (log) => {
-      const s = (log.symptoms || []).filter((s) => s !== "No Issues");
-      return s.length === 0 ? "No issues" : s.join(", ");
+      return {
+        intensity: Math.min(1, count / 4),
+        display: String(count),
+        hasData: (log.symptoms || []).length > 0,
+      };
     },
   },
   dins: {
     key: "dins",
     label: "DINS %",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const v = log.dins_percent;
-      if (v == null) return 0;
-      if (v >= 80 && v <= 120) return 1;
-      return 2;
+      if (v == null) return { intensity: 0, display: "", hasData: false };
+      // Distance from baseline (100%) → intensity. 0% diff = light, ≥60% diff = max.
+      const diff = Math.abs(v - 100);
+      return {
+        intensity: Math.min(1, 0.15 + diff / 60),
+        display: String(v),
+        hasData: true,
+      };
     },
-    describe: (log) => `${log.dins_percent ?? 0}%`,
   },
   stool: {
     key: "stool",
     label: "Stool Quality",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const s = log.stool_consistency || [];
-      if (s.length === 0) return 0;
-      const onlyFormed = s.every((x) => x === "formed");
-      return onlyFormed ? 1 : 2;
+      if (s.length === 0) return { intensity: 0, display: "", hasData: false };
+      const bad = s.filter((x) => x !== "formed").length;
+      return {
+        intensity: bad === 0 ? 0.2 : Math.min(1, 0.4 + bad * 0.3),
+        display: String(s.length),
+        hasData: true,
+      };
     },
-    describe: (log) => (log.stool_consistency || []).join(", ") || "—",
   },
   walk_freq: {
     key: "walk_freq",
     label: "Walk Frequency",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const n = safeCompletedWalks(log.walks);
-      if (n === 0) return 0;
-      return n >= 2 ? 2 : 1;
+      return {
+        intensity: Math.min(1, n / 3),
+        display: String(n),
+        hasData: n > 0,
+      };
     },
-    describe: (log) => `${safeCompletedWalks(log.walks)} walk(s)`,
   },
   walk_duration: {
     key: "walk_duration",
     label: "Walk Duration",
-    color: PRIMARY,
-    getTier: (log) => {
+    getValue: (log) => {
       const m = totalWalkMins(log.walks);
-      if (m === 0) return 0;
-      return m >= 45 ? 2 : 1;
+      return {
+        intensity: Math.min(1, m / 90),
+        display: String(m),
+        hasData: m > 0,
+      };
     },
-    describe: (log) => `${totalWalkMins(log.walks)} min`,
   },
   health: {
     key: "health",
     label: "Health Score",
-    color: PRIMARY,
-    getTier: (log) => {
-      if (log.health_score === 3) return 2;
-      if (log.health_score === 2) return 1;
-      return 2; // poor — still show a dot
-    },
-    describe: (log) => {
-      const map: Record<number, string> = { 1: "Poor", 2: "Neutral", 3: "Good" };
-      return map[log.health_score] ?? "—";
+    getValue: (log) => {
+      if (!log.health_score) return { intensity: 0, display: "", hasData: false };
+      const map: Record<number, { i: number; d: string }> = {
+        1: { i: 1, d: "1" },
+        2: { i: 0.5, d: "2" },
+        3: { i: 0.2, d: "3" },
+      };
+      const e = map[log.health_score];
+      return { intensity: e?.i ?? 0, display: e?.d ?? "", hasData: true };
     },
   },
 };
@@ -246,18 +269,30 @@ export function CalendarView({
     } else setMonth((m) => m + 1);
   };
 
-  const cells: Array<{ key: string; date: string | null; tier: 0 | 1 | 2; tooltip: string }> = [];
+  const cells: Array<{
+    key: string;
+    date: string | null;
+    value: CellValue;
+    tooltip: string;
+  }> = [];
   for (let i = 0; i < range.firstDow; i++) {
-    cells.push({ key: `pad-${i}`, date: null, tier: 0, tooltip: "" });
+    cells.push({
+      key: `pad-${i}`,
+      date: null,
+      value: { intensity: 0, display: "", hasData: false },
+      tooltip: "",
+    });
   }
   for (let d = 1; d <= range.daysInMonth; d++) {
     const date = `${year}-${pad2(month + 1)}-${pad2(d)}`;
     const log = byDate[date];
-    const tier = log ? def.getTier(log) : 0;
+    const value: CellValue = log
+      ? def.getValue(log)
+      : { intensity: 0, display: "", hasData: false };
     const tooltip = log
-      ? `${date} · ${def.describe?.(log) ?? def.label}`
+      ? `${date} · ${def.label}: ${value.display || "—"}`
       : `${date} · No log`;
-    cells.push({ key: date, date, tier, tooltip });
+    cells.push({ key: date, date, value, tooltip });
   }
 
   const visibleMetrics = metrics.map((k) => ALL_METRICS[k]);
@@ -319,48 +354,46 @@ export function CalendarView({
 
       {/* Grid */}
       <div className="mt-1 grid grid-cols-7 gap-1 px-1">
-        {cells.map((c) => (
-          <div
-            key={c.key}
-            title={c.tooltip}
-            className="aspect-square rounded-md bg-muted/40 flex flex-col items-center justify-center relative"
-          >
-            {c.date && (
-              <span className="text-[9px] text-muted-foreground absolute top-0.5 left-1 tabular-nums">
-                {parseInt(c.date.split("-")[2], 10)}
-              </span>
-            )}
-            {c.tier > 0 && (
-              <span
-                className="rounded-full"
-                style={{
-                  width: c.tier === 2 ? 14 : 8,
-                  height: c.tier === 2 ? 14 : 8,
-                  background: def.color,
-                  opacity: c.tier === 2 ? 1 : 0.55,
-                }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="rounded-full"
-            style={{ width: 8, height: 8, background: def.color, opacity: 0.55 }}
-          />
-          <span>Low / baseline</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span
-            className="rounded-full"
-            style={{ width: 12, height: 12, background: def.color }}
-          />
-          <span>High / active</span>
-        </div>
+        {cells.map((c) => {
+          const { intensity, display, hasData } = c.value;
+          let bg = "transparent";
+          if (c.date && hasData && intensity > 0) {
+            if (def.binary) {
+              bg = "var(--destructive)";
+            } else {
+              // Scale brand pink from ~10% (very light) to 100% (saturated)
+              const pct = Math.round((0.1 + 0.9 * intensity) * 100);
+              bg = `color-mix(in srgb, var(--primary) ${pct}%, transparent)`;
+            }
+          }
+          const valueTextClass =
+            def.binary && intensity > 0
+              ? "text-destructive-foreground"
+              : intensity >= 0.7
+                ? "text-foreground"
+                : "text-foreground/80";
+          return (
+            <div
+              key={c.key}
+              title={c.tooltip}
+              className={`aspect-square rounded-md flex items-center justify-center relative ${
+                c.date && !hasData ? "bg-muted/40" : c.date ? "" : ""
+              }`}
+              style={c.date ? { background: bg === "transparent" && !hasData ? undefined : bg } : undefined}
+            >
+              {c.date && (
+                <span className="text-[9px] text-muted-foreground absolute top-0.5 left-1 tabular-nums">
+                  {parseInt(c.date.split("-")[2], 10)}
+                </span>
+              )}
+              {display && (
+                <span className={`text-[11px] font-semibold tabular-nums ${valueTextClass}`}>
+                  {display}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {loading && (

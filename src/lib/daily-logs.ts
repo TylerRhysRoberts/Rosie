@@ -50,6 +50,7 @@ export const LOCATION_OPTIONS = [
   "Jenna's",
   "Simon's",
   "Other",
+  "Away",
 ] as const;
 
 export const DEFAULT_TREATS = ["Cheese", "Crompch", "Yak Chews"] as const;
