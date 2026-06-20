@@ -14,17 +14,28 @@ export type CalendarMetricKey =
   | "health";
 
 type CellValue = {
-  intensity: number; // 0..1
-  display: string; // raw value text shown inside the cell ("" = empty)
-  hasData: boolean;
+  display: string; // text shown in cell ("" = empty)
+  bg: string | null; // CSS background; null = no tint
+  textWhite?: boolean; // force white text for high-contrast alert backgrounds
 };
 
 type MetricDef = {
   key: CalendarMetricKey;
   label: string;
-  binary?: boolean; // flare-ups use destructive binary toggle
   getValue: (log: DailyLog) => CellValue;
 };
+
+// Overfeed accent (matches DINS slider overfeed color in app.tsx)
+const OVERFEED_COLOR = "oklch(0.62 0.17 55)";
+
+function pinkBg(intensity: number): string {
+  const i = Math.max(0, Math.min(1, intensity));
+  const pct = Math.round((0.1 + 0.9 * i) * 100);
+  return `color-mix(in srgb, var(--primary) ${pct}%, transparent)`;
+}
+
+// Lightly tinted background for explicit zero logs
+const ZERO_BG = pinkBg(0);
 
 function safeCompletedWalks(walks: unknown): number {
   try {
@@ -75,13 +86,10 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Medrone",
     getValue: (log) => {
       const m = log.medications?.["Medrone"];
-      if (!m?.taken) return { intensity: 0, display: "", hasData: false };
+      if (!m?.taken) return { display: "0", bg: ZERO_BG };
       const n = dosageNumeric(m.dosage);
-      return {
-        intensity: m.is_rescue ? 1 : Math.min(1, n),
-        display: dosageDisplay(n),
-        hasData: true,
-      };
+      const intensity = m.is_rescue ? 1 : Math.min(1, n);
+      return { display: dosageDisplay(n), bg: pinkBg(intensity) };
     },
   },
   probiotic: {
@@ -89,22 +97,19 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Probiotic",
     getValue: (log) => {
       const m = log.medications?.["Probiotic"];
-      if (!m?.taken) return { intensity: 0, display: "", hasData: false };
+      if (!m?.taken) return { display: "0", bg: ZERO_BG };
       const n = dosageNumeric(m.dosage);
-      return {
-        intensity: m.is_rescue ? 1 : Math.min(1, n),
-        display: dosageDisplay(n),
-        hasData: true,
-      };
+      const intensity = m.is_rescue ? 1 : Math.min(1, n);
+      return { display: dosageDisplay(n), bg: pinkBg(intensity) };
     },
   },
   flareups: {
     key: "flareups",
     label: "Flare-ups",
-    binary: true,
     getValue: (log) => {
       const yes = !!(log.flare_up || log.flare_event?.had_flareup);
-      return { intensity: yes ? 1 : 0, display: yes ? "Yes" : "No", hasData: true };
+      if (!yes) return { display: "", bg: null };
+      return { display: "Yes", bg: "var(--destructive)", textWhite: true };
     },
   },
   symptoms: {
@@ -112,11 +117,8 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Symptoms",
     getValue: (log) => {
       const count = (log.symptoms || []).filter((s) => s !== "No Issues").length;
-      return {
-        intensity: Math.min(1, count / 4),
-        display: String(count),
-        hasData: (log.symptoms || []).length > 0,
-      };
+      if (count === 0) return { display: "0", bg: ZERO_BG };
+      return { display: String(count), bg: pinkBg(Math.min(1, count / 4)) };
     },
   },
   dins: {
@@ -124,14 +126,12 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "DINS %",
     getValue: (log) => {
       const v = log.dins_percent;
-      if (v == null) return { intensity: 0, display: "", hasData: false };
-      // Distance from baseline (100%) → intensity. 0% diff = light, ≥60% diff = max.
-      const diff = Math.abs(v - 100);
-      return {
-        intensity: Math.min(1, 0.15 + diff / 60),
-        display: String(v),
-        hasData: true,
-      };
+      if (v == null) return { display: "", bg: null };
+      if (v > 100) {
+        return { display: String(v), bg: OVERFEED_COLOR, textWhite: true };
+      }
+      // Higher % → darker / more saturated pink. 0% = lightest, 100% = full.
+      return { display: String(v), bg: pinkBg(v / 100) };
     },
   },
   stool: {
@@ -139,13 +139,10 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Stool Quality",
     getValue: (log) => {
       const s = log.stool_consistency || [];
-      if (s.length === 0) return { intensity: 0, display: "", hasData: false };
+      if (s.length === 0) return { display: "0", bg: ZERO_BG };
       const bad = s.filter((x) => x !== "formed").length;
-      return {
-        intensity: bad === 0 ? 0.2 : Math.min(1, 0.4 + bad * 0.3),
-        display: String(s.length),
-        hasData: true,
-      };
+      const intensity = bad === 0 ? 0.2 : Math.min(1, 0.4 + bad * 0.3);
+      return { display: String(s.length), bg: pinkBg(intensity) };
     },
   },
   walk_freq: {
@@ -153,11 +150,8 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Walk Frequency",
     getValue: (log) => {
       const n = safeCompletedWalks(log.walks);
-      return {
-        intensity: Math.min(1, n / 3),
-        display: String(n),
-        hasData: n > 0,
-      };
+      if (n === 0) return { display: "0", bg: ZERO_BG };
+      return { display: String(n), bg: pinkBg(Math.min(1, n / 3)) };
     },
   },
   walk_duration: {
@@ -165,25 +159,24 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Walk Duration",
     getValue: (log) => {
       const m = totalWalkMins(log.walks);
-      return {
-        intensity: Math.min(1, m / 90),
-        display: String(m),
-        hasData: m > 0,
-      };
+      if (m === 0) return { display: "0", bg: ZERO_BG };
+      return { display: String(m), bg: pinkBg(Math.min(1, m / 90)) };
     },
   },
   health: {
     key: "health",
     label: "Health Score",
     getValue: (log) => {
-      if (!log.health_score) return { intensity: 0, display: "", hasData: false };
-      const map: Record<number, { i: number; d: string }> = {
-        1: { i: 1, d: "1" },
-        2: { i: 0.5, d: "2" },
-        3: { i: 0.2, d: "3" },
+      if (!log.health_score) return { display: "", bg: null };
+      // Status mapping: 1 = poor (red), 2 = warning (yellow), 3 = optimal (green)
+      const map: Record<number, { bg: string }> = {
+        1: { bg: "var(--destructive)" },
+        2: { bg: "var(--warning)" },
+        3: { bg: "var(--success)" },
       };
       const e = map[log.health_score];
-      return { intensity: e?.i ?? 0, display: e?.d ?? "", hasData: true };
+      if (!e) return { display: String(log.health_score), bg: null };
+      return { display: String(log.health_score), bg: e.bg, textWhite: true };
     },
   },
 };
@@ -279,7 +272,7 @@ export function CalendarView({
     cells.push({
       key: `pad-${i}`,
       date: null,
-      value: { intensity: 0, display: "", hasData: false },
+      value: { display: "", bg: null },
       tooltip: "",
     });
   }
@@ -288,7 +281,7 @@ export function CalendarView({
     const log = byDate[date];
     const value: CellValue = log
       ? def.getValue(log)
-      : { intensity: 0, display: "", hasData: false };
+      : { display: "", bg: null };
     const tooltip = log
       ? `${date} · ${def.label}: ${value.display || "—"}`
       : `${date} · No log`;
@@ -355,34 +348,17 @@ export function CalendarView({
       {/* Grid */}
       <div className="mt-1 grid grid-cols-7 gap-1 px-1">
         {cells.map((c) => {
-          const { intensity, display, hasData } = c.value;
-          let bg = "transparent";
-          if (c.date && hasData && intensity > 0) {
-            if (def.binary) {
-              bg = "var(--destructive)";
-            } else {
-              // Scale brand pink from ~10% (very light) to 100% (saturated)
-              const pct = Math.round((0.1 + 0.9 * intensity) * 100);
-              bg = `color-mix(in srgb, var(--primary) ${pct}%, transparent)`;
-            }
-          }
-          const valueTextClass =
-            def.binary && intensity > 0
-              ? "text-destructive-foreground"
-              : intensity >= 0.7
-                ? "text-foreground"
-                : "text-foreground/80";
+          const { display, bg, textWhite } = c.value;
+          const valueTextClass = textWhite ? "text-white" : "text-foreground/80";
           return (
             <div
               key={c.key}
               title={c.tooltip}
-              className={`aspect-square rounded-md flex items-center justify-center relative ${
-                c.date && !hasData ? "bg-muted/40" : c.date ? "" : ""
-              }`}
-              style={c.date ? { background: bg === "transparent" && !hasData ? undefined : bg } : undefined}
+              className="aspect-square rounded-md flex items-center justify-center relative"
+              style={c.date && bg ? { background: bg } : undefined}
             >
               {c.date && (
-                <span className="text-[9px] text-muted-foreground absolute top-0.5 left-1 tabular-nums">
+                <span className={`text-[9px] absolute top-0.5 left-1 tabular-nums ${textWhite ? "text-white/80" : "text-muted-foreground"}`}>
                   {parseInt(c.date.split("-")[2], 10)}
                 </span>
               )}
