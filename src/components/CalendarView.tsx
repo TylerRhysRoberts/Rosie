@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import { DailyLog, fetchLogsRange } from "@/lib/daily-logs";
+import { DailyLog, DOSAGE_LABELS, fetchLogsRange, totalWalkMinutes } from "@/lib/daily-logs";
 
 export type CalendarMetricKey =
   | "medrone"
@@ -290,7 +290,17 @@ export function CalendarView({
 
   const visibleMetrics = metrics.map((k) => ALL_METRICS[k]);
 
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+
+  // Clear selection when month changes
+  useEffect(() => {
+    setActiveDate(null);
+  }, [year, month]);
+
+  const activeLog = activeDate ? byDate[activeDate] : null;
+
   return (
+    <>
     <div className="rounded-2xl bg-card border border-border p-4">
       {/* Header: month nav */}
       <div className="flex items-center justify-center gap-3">
@@ -350,11 +360,22 @@ export function CalendarView({
         {cells.map((c) => {
           const { display, bg, textWhite } = c.value;
           const valueTextClass = textWhite ? "text-white" : "text-foreground/80";
+          const hasLog = !!(c.date && byDate[c.date]);
+          const isActive = !!(c.date && activeDate === c.date);
           return (
             <div
               key={c.key}
               title={c.tooltip}
-              className="aspect-square rounded-md flex items-center justify-center relative"
+              onClick={hasLog ? () => setActiveDate((prev) => (prev === c.date ? null : c.date)) : undefined}
+              role={hasLog ? "button" : undefined}
+              tabIndex={hasLog ? 0 : undefined}
+              onKeyDown={hasLog ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setActiveDate((prev) => (prev === c.date ? null : c.date));
+                }
+              } : undefined}
+              className={`aspect-square rounded-md flex items-center justify-center relative transition ${hasLog ? "cursor-pointer active:scale-95 hover:brightness-95" : ""} ${isActive ? "ring-2 ring-foreground ring-offset-1 ring-offset-card" : ""}`}
               style={c.date && bg ? { background: bg } : undefined}
             >
               {c.date && (
@@ -374,6 +395,90 @@ export function CalendarView({
 
       {loading && (
         <p className="mt-3 text-center text-[10px] text-muted-foreground">Loading…</p>
+      )}
+    </div>
+
+    {activeDate && (
+      <DailySummaryCard date={activeDate} log={activeLog} />
+    )}
+    </>
+  );
+}
+
+function formatDateLong(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function DailySummaryCard({ date, log }: { date: string; log: DailyLog | null }) {
+  return (
+    <div className="mt-3 rounded-2xl bg-card border border-border p-4">
+      <h3 className="text-sm font-semibold">Log Summary: {formatDateLong(date)}</h3>
+      {!log ? (
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          No logs recorded for this date.
+        </p>
+      ) : (
+        <SummaryBody log={log} />
+      )}
+    </div>
+  );
+}
+
+function SummaryBody({ log }: { log: DailyLog }) {
+  const meds = Object.entries(log.medications || {}).filter(([, m]) => m?.taken);
+  const symptoms = (log.symptoms || []).filter((s) => s && s !== "No Issues");
+  const stool = (log.stool_consistency || []).filter(Boolean);
+  const flareYes = !!(log.flare_up || log.flare_event?.had_flareup);
+  const walkMins = totalWalkMinutes(log.walks || []);
+  const walkCount = (log.walks || []).filter((w) => w.completed).length;
+  const treats = (log.treats || []).filter(Boolean);
+  const scavenged = (log.scavenged || []).filter(Boolean);
+
+  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="flex gap-2 text-sm">
+      <span className="text-muted-foreground shrink-0">{label}:</span>
+      <span className="text-foreground">{children}</span>
+    </div>
+  );
+
+  const dinsExtras: string[] = [];
+  if (log.dins_prompting) dinsExtras.push("prompting needed");
+
+  return (
+    <div className="mt-3 space-y-2">
+      <Row label="Health Score">{log.health_score}/3</Row>
+      <Row label="Flare-up">{flareYes ? "Yes" : "No"}</Row>
+      {meds.length > 0 && (
+        <Row label="Medications">
+          {meds
+            .map(([n, m]) => `${n} (${DOSAGE_LABELS[m.dosage] ?? m.dosage})${m.is_rescue ? " · rescue" : ""}`)
+            .join(", ")}
+        </Row>
+      )}
+      <Row label="DINS">
+        {log.dins_percent}%{dinsExtras.length ? ` (${dinsExtras.join(", ")})` : ""}
+      </Row>
+      <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "None"}</Row>
+      <Row label="Stool Quality">{stool.length > 0 ? stool.join(", ") : "—"}</Row>
+      <Row label="Walks">
+        {walkCount > 0 || walkMins > 0
+          ? `${walkCount} walk${walkCount === 1 ? "" : "s"} · ${walkMins} min`
+          : "None"}
+      </Row>
+      {treats.length > 0 && <Row label="Treats">{treats.join(", ")}</Row>}
+      {scavenged.length > 0 && <Row label="Scavenged">{scavenged.join(", ")}</Row>}
+      {log.location && <Row label="Location">{log.location}</Row>}
+      {log.routine_type && <Row label="Routine">{log.routine_type === "routine" ? "Routine" : "Non-routine"}</Row>}
+      {log.notes && log.notes.trim() && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-1">Notes</p>
+          <p className="text-sm whitespace-pre-wrap">{log.notes}</p>
+        </div>
       )}
     </div>
   );
