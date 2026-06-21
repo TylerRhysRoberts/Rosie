@@ -458,7 +458,13 @@ function DailySummaryCard({ date, log }: { date: string; log: DailyLog | null })
 function SummaryBody({ log }: { log: DailyLog }) {
   const meds = Object.entries(log.medications || {}).filter(([, m]) => m?.taken);
   const symptoms = (log.symptoms || []).filter((s) => s && s !== "No Issues");
-  const stool = (log.stool_consistency || []).filter(Boolean);
+  const rawStool = (log.stool_consistency || []).filter(Boolean);
+  const badStool = rawStool.filter((x) => x !== "formed");
+  const stoolLabel = badStool.length === 0
+    ? "No issues"
+    : badStool
+        .map((v) => STOOL_OPTIONS.find((o) => o.value === v)?.label ?? v)
+        .join(", ");
   const flareYes = !!(log.flare_up || log.flare_event?.had_flareup);
   const walkMins = totalWalkMinutes(log.walks || []);
   const walkCount = (log.walks || []).filter((w) => w.completed).length;
@@ -489,8 +495,8 @@ function SummaryBody({ log }: { log: DailyLog }) {
       <Row label="DINS">
         {log.dins_percent}%{dinsExtras.length ? ` (${dinsExtras.join(", ")})` : ""}
       </Row>
-      <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "None"}</Row>
-      <Row label="Stool Quality">{stool.length > 0 ? stool.join(", ") : "—"}</Row>
+      <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "No issues"}</Row>
+      <Row label="Stool Quality">{stoolLabel}</Row>
       <Row label="Walks">
         {walkCount > 0 || walkMins > 0
           ? `${walkCount} walk${walkCount === 1 ? "" : "s"} · ${walkMins} min`
