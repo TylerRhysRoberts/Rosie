@@ -360,13 +360,13 @@ function InsightsPage() {
               <CalendarView
                 userId={user.id}
                 metrics={[
+                  "health",
                   "flareups",
                   "symptoms",
                   "dins",
                   "stool",
                   "walk_freq",
                   "walk_duration",
-                  "health",
                 ]}
               />
             </div>

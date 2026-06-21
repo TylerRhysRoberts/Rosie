@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import { DailyLog, DOSAGE_LABELS, fetchLogsRange, totalWalkMinutes } from "@/lib/daily-logs";
+import { DailyLog, DOSAGE_LABELS, STOOL_OPTIONS, fetchLogsRange, totalWalkMinutes } from "@/lib/daily-logs";
 
 export type CalendarMetricKey =
   | "medrone"
@@ -14,9 +14,10 @@ export type CalendarMetricKey =
   | "health";
 
 type CellValue = {
-  display: string; // text shown in cell ("" = empty)
-  bg: string | null; // CSS background; null = no tint
-  textWhite?: boolean; // force white text for high-contrast alert backgrounds
+  display: string;            // text shown in cell ("" = empty)
+  value: number | null;       // numeric magnitude for gradient; null = no gradient
+  zero?: boolean;             // explicit zero log → light tint
+  override?: { bg: string; textWhite?: boolean }; // alert color override
 };
 
 type MetricDef = {
@@ -28,14 +29,16 @@ type MetricDef = {
 // Overfeed accent (matches DINS slider overfeed color in app.tsx)
 const OVERFEED_COLOR = "oklch(0.62 0.17 55)";
 
+// Map a normalized 0..1 intensity to a pink background.
+// Min input → nearly transparent pale tint; max input → fully saturated primary.
 function pinkBg(intensity: number): string {
   const i = Math.max(0, Math.min(1, intensity));
-  const pct = Math.round((0.1 + 0.9 * i) * 100);
+  const pct = Math.round((0.05 + 0.95 * i) * 100);
   return `color-mix(in srgb, var(--primary) ${pct}%, transparent)`;
 }
 
-// Lightly tinted background for explicit zero logs
-const ZERO_BG = pinkBg(0);
+// Faint background for explicit zero logs (other than stool/symptoms).
+const ZERO_BG = `color-mix(in srgb, var(--primary) 5%, transparent)`;
 
 function safeCompletedWalks(walks: unknown): number {
   try {
@@ -86,10 +89,12 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Medrone",
     getValue: (log) => {
       const m = log.medications?.["Medrone"];
-      if (!m?.taken) return { display: "0", bg: ZERO_BG };
+      if (!m?.taken) return { display: "0", value: 0, zero: true };
       const n = dosageNumeric(m.dosage);
-      const intensity = m.is_rescue ? 1 : Math.min(1, n);
-      return { display: dosageDisplay(n), bg: pinkBg(intensity) };
+      if (m.is_rescue) {
+        return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(1) } };
+      }
+      return { display: dosageDisplay(n), value: n };
     },
   },
   probiotic: {
@@ -97,10 +102,12 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Probiotic",
     getValue: (log) => {
       const m = log.medications?.["Probiotic"];
-      if (!m?.taken) return { display: "0", bg: ZERO_BG };
+      if (!m?.taken) return { display: "0", value: 0, zero: true };
       const n = dosageNumeric(m.dosage);
-      const intensity = m.is_rescue ? 1 : Math.min(1, n);
-      return { display: dosageDisplay(n), bg: pinkBg(intensity) };
+      if (m.is_rescue) {
+        return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(1) } };
+      }
+      return { display: dosageDisplay(n), value: n };
     },
   },
   flareups: {
@@ -108,8 +115,8 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Flare-ups",
     getValue: (log) => {
       const yes = !!(log.flare_up || log.flare_event?.had_flareup);
-      if (!yes) return { display: "", bg: null };
-      return { display: "Yes", bg: "var(--destructive)", textWhite: true };
+      if (!yes) return { display: "", value: null };
+      return { display: "Yes", value: null, override: { bg: "var(--destructive)", textWhite: true } };
     },
   },
   symptoms: {
@@ -117,8 +124,9 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Symptoms",
     getValue: (log) => {
       const count = (log.symptoms || []).filter((s) => s !== "No Issues").length;
-      if (count === 0) return { display: "0", bg: ZERO_BG };
-      return { display: String(count), bg: pinkBg(Math.min(1, count / 4)) };
+      // 0 / "No Issues" → unshaded, consistent with stool quality rule.
+      if (count === 0) return { display: "0", value: null };
+      return { display: String(count), value: count };
     },
   },
   dins: {
@@ -126,12 +134,12 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "DINS %",
     getValue: (log) => {
       const v = log.dins_percent;
-      if (v == null) return { display: "", bg: null };
+      if (v == null) return { display: "", value: null };
       if (v > 100) {
-        return { display: String(v), bg: OVERFEED_COLOR, textWhite: true };
+        return { display: String(v), value: null, override: { bg: OVERFEED_COLOR, textWhite: true } };
       }
-      // Higher % → darker / more saturated pink. 0% = lightest, 100% = full.
-      return { display: String(v), bg: pinkBg(v / 100) };
+      if (v === 0) return { display: "0", value: 0, zero: true };
+      return { display: String(v), value: v };
     },
   },
   stool: {
@@ -139,10 +147,10 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Stool Quality",
     getValue: (log) => {
       const s = log.stool_consistency || [];
-      if (s.length === 0) return { display: "0", bg: ZERO_BG };
       const bad = s.filter((x) => x !== "formed").length;
-      const intensity = bad === 0 ? 0.2 : Math.min(1, 0.4 + bad * 0.3);
-      return { display: String(s.length), bg: pinkBg(intensity) };
+      // "No issues" (empty or only "formed") → display "0", no tint.
+      if (bad === 0) return { display: "0", value: null };
+      return { display: String(bad), value: bad };
     },
   },
   walk_freq: {
@@ -150,8 +158,8 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Walk Frequency",
     getValue: (log) => {
       const n = safeCompletedWalks(log.walks);
-      if (n === 0) return { display: "0", bg: ZERO_BG };
-      return { display: String(n), bg: pinkBg(Math.min(1, n / 3)) };
+      if (n === 0) return { display: "0", value: 0, zero: true };
+      return { display: String(n), value: n };
     },
   },
   walk_duration: {
@@ -159,24 +167,23 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
     label: "Walk Duration",
     getValue: (log) => {
       const m = totalWalkMins(log.walks);
-      if (m === 0) return { display: "0", bg: ZERO_BG };
-      return { display: String(m), bg: pinkBg(Math.min(1, m / 90)) };
+      if (m === 0) return { display: "0", value: 0, zero: true };
+      return { display: String(m), value: m };
     },
   },
   health: {
     key: "health",
     label: "Health Score",
     getValue: (log) => {
-      if (!log.health_score) return { display: "", bg: null };
-      // Status mapping: 1 = poor (red), 2 = warning (yellow), 3 = optimal (green)
-      const map: Record<number, { bg: string }> = {
-        1: { bg: "var(--destructive)" },
-        2: { bg: "var(--warning)" },
-        3: { bg: "var(--success)" },
+      if (!log.health_score) return { display: "", value: null };
+      const map: Record<number, string> = {
+        1: "var(--destructive)",
+        2: "var(--warning)",
+        3: "var(--success)",
       };
-      const e = map[log.health_score];
-      if (!e) return { display: String(log.health_score), bg: null };
-      return { display: String(log.health_score), bg: e.bg, textWhite: true };
+      const bg = map[log.health_score];
+      if (!bg) return { display: String(log.health_score), value: null };
+      return { display: String(log.health_score), value: null, override: { bg, textWhite: true } };
     },
   },
 };
@@ -272,7 +279,7 @@ export function CalendarView({
     cells.push({
       key: `pad-${i}`,
       date: null,
-      value: { display: "", bg: null },
+      value: { display: "", value: null },
       tooltip: "",
     });
   }
@@ -281,12 +288,22 @@ export function CalendarView({
     const log = byDate[date];
     const value: CellValue = log
       ? def.getValue(log)
-      : { display: "", bg: null };
+      : { display: "", value: null };
     const tooltip = log
       ? `${date} · ${def.label}: ${value.display || "—"}`
       : `${date} · No log`;
     cells.push({ key: date, date, value, tooltip });
   }
+
+  // Compute per-metric max across the visible month for full-range gradient contrast.
+  const maxVal = useMemo(() => {
+    let max = 0;
+    for (const c of cells) {
+      const v = c.value.value;
+      if (typeof v === "number" && v > 0) max = Math.max(max, v);
+    }
+    return max;
+  }, [cells]);
 
   const visibleMetrics = metrics.map((k) => ALL_METRICS[k]);
 
@@ -358,7 +375,16 @@ export function CalendarView({
       {/* Grid */}
       <div className="mt-1 grid grid-cols-7 gap-1 px-1">
         {cells.map((c) => {
-          const { display, bg, textWhite } = c.value;
+          const { display, value, zero, override } = c.value;
+          let bg: string | null = null;
+          let textWhite = false;
+          if (override) {
+            bg = override.bg;
+            textWhite = !!override.textWhite;
+          } else if (typeof value === "number") {
+            if (value > 0 && maxVal > 0) bg = pinkBg(value / maxVal);
+            else if (value === 0 && zero) bg = ZERO_BG;
+          }
           const valueTextClass = textWhite ? "text-white" : "text-foreground/80";
           const hasLog = !!(c.date && byDate[c.date]);
           const isActive = !!(c.date && activeDate === c.date);
@@ -432,7 +458,13 @@ function DailySummaryCard({ date, log }: { date: string; log: DailyLog | null })
 function SummaryBody({ log }: { log: DailyLog }) {
   const meds = Object.entries(log.medications || {}).filter(([, m]) => m?.taken);
   const symptoms = (log.symptoms || []).filter((s) => s && s !== "No Issues");
-  const stool = (log.stool_consistency || []).filter(Boolean);
+  const rawStool = (log.stool_consistency || []).filter(Boolean);
+  const badStool = rawStool.filter((x) => x !== "formed");
+  const stoolLabel = badStool.length === 0
+    ? "No issues"
+    : badStool
+        .map((v) => STOOL_OPTIONS.find((o) => o.value === v)?.label ?? v)
+        .join(", ");
   const flareYes = !!(log.flare_up || log.flare_event?.had_flareup);
   const walkMins = totalWalkMinutes(log.walks || []);
   const walkCount = (log.walks || []).filter((w) => w.completed).length;
@@ -463,8 +495,8 @@ function SummaryBody({ log }: { log: DailyLog }) {
       <Row label="DINS">
         {log.dins_percent}%{dinsExtras.length ? ` (${dinsExtras.join(", ")})` : ""}
       </Row>
-      <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "None"}</Row>
-      <Row label="Stool Quality">{stool.length > 0 ? stool.join(", ") : "—"}</Row>
+      <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "No issues"}</Row>
+      <Row label="Stool Quality">{stoolLabel}</Row>
       <Row label="Walks">
         {walkCount > 0 || walkMins > 0
           ? `${walkCount} walk${walkCount === 1 ? "" : "s"} · ${walkMins} min`
