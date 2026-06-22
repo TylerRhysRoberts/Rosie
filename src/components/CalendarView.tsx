@@ -63,14 +63,39 @@ function totalWalkMins(walks: unknown): number {
   }
 }
 
-function dosageNumeric(d: string | undefined): number {
-  switch (d) {
-    case "whole": return 1;
-    case "half": return 0.5;
-    case "third": return 1 / 3;
-    case "quarter": return 0.25;
-    case "eighth": return 0.125;
-    default: return 0;
+function dosageNumeric(d: string | undefined | null): number {
+  if (d == null) return 0;
+  const key = String(d).trim().toLowerCase();
+  switch (key) {
+    case "whole":
+    case "full":
+    case "1":
+    case "1.0":
+    case "one":
+      return 1.0;
+    case "half":
+    case "1/2":
+    case "½":
+    case "0.5":
+      return 0.5;
+    case "third":
+    case "1/3":
+    case "⅓":
+      return 0.33;
+    case "quarter":
+    case "1/4":
+    case "¼":
+    case "0.25":
+      return 0.25;
+    case "eighth":
+    case "1/8":
+    case "⅛":
+    case "0.125":
+      return 0.125;
+    default: {
+      const n = Number(key);
+      return Number.isFinite(n) && n > 0 ? Math.min(1, n) : 0;
+    }
   }
 }
 
@@ -94,7 +119,8 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
       if (m.is_rescue) {
         return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(1) } };
       }
-      return { display: dosageDisplay(n), value: n };
+      // Absolute scale (0..1) so 1/2 visibly differs from 1 regardless of month max.
+      return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(n) } };
     },
   },
   probiotic: {
@@ -107,7 +133,7 @@ const ALL_METRICS: Record<CalendarMetricKey, MetricDef> = {
       if (m.is_rescue) {
         return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(1) } };
       }
-      return { display: dosageDisplay(n), value: n };
+      return { display: dosageDisplay(n), value: null, override: { bg: pinkBg(n) } };
     },
   },
   flareups: {
