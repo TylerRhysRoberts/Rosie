@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_logs ALTER COLUMN dins_percent DROP NOT NULL; ALTER TABLE public.daily_logs ALTER COLUMN dins_percent DROP DEFAULT;

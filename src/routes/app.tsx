@@ -817,12 +817,26 @@ function LogPage() {
 
           {/* 4. Dietary inputs */}
           {!log.holiday_mode && (
-          <Section label="% of Dins" hint={`${log.dins_percent}%`}>
+          <Section
+            label="% of Dins"
+            action={
+              <Toggle
+                on={log.dins_percent != null}
+                onChange={(v) =>
+                  update("dins_percent", v ? (log.dins_percent ?? 100) : null)
+                }
+              />
+            }
+          >
             <DinsSlider
-              value={log.dins_percent}
+              value={log.dins_percent ?? 100}
+              active={log.dins_percent != null}
               onChange={(v) => update("dins_percent", v)}
               prompting={!!log.dins_prompting}
-              onPromptingChange={(v) => update("dins_prompting", v)}
+              onPromptingChange={(v) => {
+                update("dins_prompting", v);
+                if (log.dins_percent == null) update("dins_percent", 100);
+              }}
             />
           </Section>
           )}
@@ -1184,11 +1198,13 @@ function HeaderAddButton({ label, onClick }: { label: string; onClick: () => voi
 
 function DinsSlider({
   value,
+  active,
   onChange,
   prompting,
   onPromptingChange,
 }: {
   value: number;
+  active: boolean;
   onChange: (v: number) => void;
   prompting: boolean;
   onPromptingChange: (v: boolean) => void;
@@ -1203,13 +1219,31 @@ function DinsSlider({
   const trackBg = over
     ? `linear-gradient(to right, ${pink} 0%, ${pink} ${normalPct}%, ${orange} ${normalPct}%, ${orange} ${overPct}%, ${muted} ${overPct}%, ${muted} 100%)`
     : `linear-gradient(to right, ${pink} 0%, ${pink} ${normalPct}%, ${muted} ${normalPct}%, ${muted} 100%)`;
+  const options: number[] = [];
+  for (let i = 0; i <= 150; i += 5) options.push(i);
   return (
-    <div className="rounded-xl bg-card border border-border p-4">
+    <div className={`rounded-xl bg-card border border-border p-4 transition-opacity ${active ? "" : "opacity-60"}`}>
       <div className="flex items-start justify-between mb-3 gap-3">
         <div className="flex items-baseline gap-2">
-          <span className={`text-2xl font-semibold tabular-nums ${over ? "text-[oklch(0.62_0.17_55)]" : "text-foreground"}`}>
-            {pct}%
-          </span>
+          <label className="relative inline-flex items-baseline cursor-pointer">
+            <span
+              className={`text-2xl font-semibold tabular-nums ${
+                active ? (over ? "text-[oklch(0.62_0.17_55)]" : "text-foreground") : "text-muted-foreground"
+              }`}
+            >
+              {active ? `${pct}%` : "—"}
+            </span>
+            <select
+              aria-label="Select DINS percentage"
+              value={pct}
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            >
+              {options.map((o) => (
+                <option key={o} value={o}>{o}%</option>
+              ))}
+            </select>
+          </label>
           {over && (
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.62_0.17_55)]">
               Overfeed
