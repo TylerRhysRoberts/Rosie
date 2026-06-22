@@ -493,7 +493,8 @@ function SummaryBody({ log }: { log: DailyLog }) {
         </Row>
       )}
       <Row label="DINS">
-        {log.dins_percent}%{dinsExtras.length ? ` (${dinsExtras.join(", ")})` : ""}
+        {log.dins_percent == null ? "Not logged" : `${log.dins_percent}%`}
+        {dinsExtras.length ? ` (${dinsExtras.join(", ")})` : ""}
       </Row>
       <Row label="Symptoms">{symptoms.length > 0 ? symptoms.join(", ") : "No issues"}</Row>
       <Row label="Stool Quality">{stoolLabel}</Row>
