@@ -17,7 +17,7 @@ export type Database = {
       daily_logs: {
         Row: {
           created_at: string
-          dins_percent: number
+          dins_percent: number | null
           dins_prompting: boolean
           flare_event: Json
           flare_up: boolean
@@ -39,7 +39,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          dins_percent?: number
+          dins_percent?: number | null
           dins_prompting?: boolean
           flare_event?: Json
           flare_up?: boolean
@@ -61,7 +61,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          dins_percent?: number
+          dins_percent?: number | null
           dins_prompting?: boolean
           flare_event?: Json
           flare_up?: boolean
