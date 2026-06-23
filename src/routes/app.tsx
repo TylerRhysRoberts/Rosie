@@ -627,6 +627,19 @@ function LogPage() {
               >
                 <Sun className="w-5 h-5" />
               </button>
+              <button
+                onClick={() => setFlareOn(!log.flare_up)}
+                className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
+                  log.flare_up
+                    ? "text-[oklch(0.58_0.20_25)] bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
+                    : "text-muted-foreground bg-card border-border hover:text-foreground"
+                }`}
+                aria-label="Toggle flare-up day"
+                aria-pressed={log.flare_up}
+                title={log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
+              >
+                <AlertTriangle className="w-5 h-5" />
+              </button>
             </div>
             <button
               onClick={handleCopyYesterday}
@@ -637,28 +650,9 @@ function LogPage() {
           </Section>
 
           {/* 2. Severity & alert flags */}
-          <Section label="Flare-Up Alert">
-            <button
-              onClick={() => setFlareOn(!log.flare_up)}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all active:scale-[0.99] ${
-                log.flare_up
-                  ? "bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
-                  : "bg-card border-border"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <AlertTriangle
-                  className={`w-5 h-5 ${log.flare_up ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}
-                />
-                <span className={`text-sm font-semibold ${log.flare_up ? "text-[oklch(0.45_0.18_25)]" : "text-foreground"}`}>
-                  {log.flare_up ? "Flare-up day flagged" : "Mark as flare-up day"}
-                </span>
-              </div>
-              <Toggle on={log.flare_up} onChange={setFlareOn} />
-            </button>
-
-            {log.flare_up && (
-              <div className="mt-3 rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
+          {log.flare_up && (
+            <Section label="Flare-Up Details">
+              <div className="rounded-2xl bg-card border border-[oklch(0.68_0.20_25)]/40 p-4 space-y-4 animate-fade-up-blur">
                 {log.holiday_mode ? (
                   <div className="rounded-xl bg-muted border border-dashed border-border px-3 py-2.5 text-[12px] text-muted-foreground">
                     Holiday mode: flare-up is logged as all day (00:00 – 23:59).
@@ -728,8 +722,8 @@ function LogPage() {
                   })()}
                 </div>
               </div>
-            )}
-          </Section>
+            </Section>
+          )}
 
           {!log.holiday_mode && (
           <Section label="Overall Health Score">
