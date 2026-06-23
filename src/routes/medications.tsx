@@ -208,8 +208,8 @@ function MedicationsPage() {
           </Link>
         </div>
 
-        {/* Sticky range filter */}
-        <div className="sticky top-0 z-10 -mx-5 px-5 pt-5 pb-3 bg-background">
+        {/* Range filter - scrolls natively */}
+        <div className="relative -mx-5 px-5 pt-5 pb-3 bg-background">
           <div className="flex gap-2 bg-muted rounded-full p-1">
             {([7, 30, 90] as const).map((n) => (
               <button
