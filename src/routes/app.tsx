@@ -587,14 +587,15 @@ function LogPage() {
 
         <div className="mt-6 space-y-5">
           {/* 1. Header & system controls */}
-          <Section
-            label={new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          >
+          <div className="animate-fade-up-blur">
+            <h2 className="mb-2 px-1 text-sm font-semibold tracking-tight text-foreground">
+              {new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </h2>
             <div className="grid grid-cols-6 gap-2 relative">
               <button
                 onClick={() => shiftDate(-1)}
@@ -662,7 +663,7 @@ function LogPage() {
                 <AlertTriangle className="w-5 h-5" />
               </button>
             </div>
-          </Section>
+          </div>
 
           {/* 2. Severity & alert flags */}
           {log.flare_up && (
