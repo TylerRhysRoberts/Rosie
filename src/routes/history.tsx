@@ -451,17 +451,171 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function FilterToggle({ on, onClick, children, activeClass }: { on: boolean; onClick: () => void; children: React.ReactNode; activeClass?: string }) {
+function PillToggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full h-8 px-2 rounded-full text-xs font-medium border transition-all active:scale-95 whitespace-nowrap leading-none flex items-center justify-center ${
+      className={`h-8 px-3 rounded-full text-xs font-medium border transition-all active:scale-95 whitespace-nowrap leading-none ${
         on
-          ? (activeClass ?? "bg-primary text-primary-foreground border-primary")
+          ? "bg-primary text-primary-foreground border-primary"
           : "bg-card text-foreground border-border hover:border-primary/40"
       }`}
     >
       {children}
     </button>
+  );
+}
+
+function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+type FilterDrawerProps = {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  health: Set<string>; setHealth: (s: Set<string>) => void;
+  context: Set<string>; setContext: (s: Set<string>) => void;
+  locationFilter: string; setLocationFilter: (s: string) => void;
+  medFilter: string; setMedFilter: (s: string) => void;
+  stool: Set<string>; setStool: (s: Set<string>) => void;
+  symptoms: Set<string>; setSymptoms: (s: Set<string>) => void;
+  scavenged: Set<string>; setScavenged: (s: Set<string>) => void;
+  lagWindow: boolean; setLagWindow: (b: boolean) => void;
+  uniqueLocations: string[];
+  uniqueMedications: string[];
+  onClear: () => void;
+};
+
+function FilterDrawer(p: FilterDrawerProps) {
+  const toggle = (set: Set<string>, value: string, setter: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    setter(next);
+  };
+
+  const HEALTH_OPTS: { v: string; l: string }[] = [
+    { v: "poor", l: "Poor" },
+    { v: "neutral", l: "Neutral" },
+    { v: "good", l: "Good" },
+    { v: "flare", l: "Flare-Up" },
+  ];
+  const STOOL_LABELS: { v: string; l: string }[] = [
+    { v: "formed", l: "No Issues" },
+    { v: "soft", l: "Soft / Loose" },
+    { v: "loose", l: "Mucus" },
+    { v: "liquid", l: "Liquid / Diarrhoea" },
+    { v: "blood", l: "Blood" },
+    { v: "constipation", l: "Constipation" },
+  ];
+  const SYMPTOM_OPTS = ["No Issues", "Squelching", "Lethargy", "Reduced Appetite", "Vomiting", "Eating Grass"];
+  const SCAVENGED_OPTS = ["Twigs", "Floor Food", "Plants"];
+
+  return (
+    <Sheet open={p.open} onOpenChange={p.onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-2xl p-0 max-h-[85vh] flex flex-col">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <SheetTitle className="text-left">Filters</SheetTitle>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          <FilterGroup label="Health">
+            {HEALTH_OPTS.map((o) => (
+              <PillToggle key={o.v} on={p.health.has(o.v)} onClick={() => toggle(p.health, o.v, p.setHealth)}>
+                {o.l}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
+          <FilterGroup label="Context">
+            <PillToggle on={p.context.has("holiday")} onClick={() => toggle(p.context, "holiday", p.setContext)}>Holiday</PillToggle>
+            <PillToggle on={p.context.has("notes")} onClick={() => toggle(p.context, "notes", p.setContext)}>Notes</PillToggle>
+          </FilterGroup>
+
+          <FilterGroup label="Location">
+            <select
+              value={p.locationFilter}
+              onChange={(e) => p.setLocationFilter(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="">All locations</option>
+              {p.uniqueLocations.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </FilterGroup>
+
+          <FilterGroup label="Medications">
+            <select
+              value={p.medFilter}
+              onChange={(e) => p.setMedFilter(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="">All medications</option>
+              {p.uniqueMedications.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </FilterGroup>
+
+          <FilterGroup label="Stool">
+            {STOOL_LABELS.map((o) => (
+              <PillToggle key={o.v} on={p.stool.has(o.v)} onClick={() => toggle(p.stool, o.v, p.setStool)}>
+                {o.l}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
+          <FilterGroup label="Symptoms">
+            {SYMPTOM_OPTS.map((s) => (
+              <PillToggle key={s} on={p.symptoms.has(s)} onClick={() => toggle(p.symptoms, s, p.setSymptoms)}>
+                {s}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
+          <FilterGroup label="Scavenged / Additional Food">
+            {SCAVENGED_OPTS.map((s) => (
+              <PillToggle key={s} on={p.scavenged.has(s)} onClick={() => toggle(p.scavenged, s, p.setScavenged)}>
+                {s}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
+          <div className="flex items-start justify-between gap-3 pt-2 border-t border-border">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">+1–2 Days Lag Window</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Show logs from 1–2 days after the criteria above match — to spot delayed reactions.
+              </p>
+            </div>
+            <Switch checked={p.lagWindow} onCheckedChange={p.setLagWindow} />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 px-5 py-3 border-t border-border bg-card">
+          <button
+            type="button"
+            onClick={p.onClear}
+            className="flex-1 h-11 rounded-xl border border-border text-sm font-semibold text-foreground hover:border-primary/40 active:scale-95"
+          >
+            Clear All
+          </button>
+          <button
+            type="button"
+            onClick={() => p.onOpenChange(false)}
+            className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-95"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
