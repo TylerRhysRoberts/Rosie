@@ -75,7 +75,13 @@ function HistoryPage() {
     }
     if (context.has("holiday") && !l.holiday_mode) return false;
     if (context.has("notes") && !(l.notes && l.notes.trim().length > 0)) return false;
-    if (locationFilter && l.location !== locationFilter) return false;
+    if (locationFilter) {
+      if (locationFilter === "Not Home") {
+        if (!l.location || l.location.trim().toLowerCase() === "home") return false;
+      } else if (l.location !== locationFilter) {
+        return false;
+      }
+    }
     if (medFilter) {
       const m = l.medications[medFilter];
       if (!m || !m.taken) return false;
