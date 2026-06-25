@@ -551,6 +551,7 @@ function FilterDrawer(p: FilterDrawerProps) {
               className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="">All locations</option>
+              <option value="Not Home">Not Home</option>
               {p.uniqueLocations.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
