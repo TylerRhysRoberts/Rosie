@@ -75,7 +75,13 @@ function HistoryPage() {
     }
     if (context.has("holiday") && !l.holiday_mode) return false;
     if (context.has("notes") && !(l.notes && l.notes.trim().length > 0)) return false;
-    if (locationFilter && l.location !== locationFilter) return false;
+    if (locationFilter) {
+      if (locationFilter === "Not Home") {
+        if (!l.location || l.location.trim().toLowerCase() === "home") return false;
+      } else if (l.location !== locationFilter) {
+        return false;
+      }
+    }
     if (medFilter) {
       const m = l.medications[medFilter];
       if (!m || !m.taken) return false;
@@ -199,13 +205,13 @@ function HistoryPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search notes…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full h-11 pl-10 pr-4 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
             <button
               type="button"
               onClick={() => setFilterOpen(true)}
-              className="relative inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-xl px-3 py-2.5 hover:border-primary/40 active:scale-95"
+              className="relative h-11 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-xl px-3.5 hover:border-primary/40 active:scale-95"
             >
               <SlidersHorizontal className="w-4 h-4" /> Filter
               {activeFilterCount > 0 && (
@@ -545,6 +551,7 @@ function FilterDrawer(p: FilterDrawerProps) {
               className="w-full h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="">All locations</option>
+              <option value="Not Home">Not Home</option>
               {p.uniqueLocations.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
