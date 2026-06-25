@@ -38,7 +38,10 @@ export function InventoryConfig({ userId, inventory, onChange }: Props) {
     setSaving(true);
     const { error } = await supabase
       .from("dog_profile")
-      .upsert([{ user_id: userId, ...next }], { onConflict: "user_id" });
+      .upsert(
+        [{ user_id: userId, ...next } as never],
+        { onConflict: "user_id" },
+      );
     setSaving(false);
     if (error) toast.error("Save failed", { description: error.message });
   };
