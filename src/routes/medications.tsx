@@ -18,7 +18,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "@/components/ui/sheet";
 import {
   EMPTY_INVENTORY,
@@ -321,14 +320,8 @@ function MedicationsPage() {
             side="bottom"
             className="rounded-t-2xl max-h-[85vh] overflow-y-auto bg-background p-0"
           >
-            <SheetHeader className="flex flex-row items-center justify-between border-b border-border px-5 py-4">
+            <SheetHeader className="border-b border-border px-5 py-4 text-left">
               <SheetTitle className="text-base font-semibold text-foreground">Medication Inventory</SheetTitle>
-              <SheetClose
-                aria-label="Close inventory"
-                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-95 transition"
-              >
-                <X className="w-4 h-4" />
-              </SheetClose>
             </SheetHeader>
             <div className="p-5">
               <InventoryConfig
