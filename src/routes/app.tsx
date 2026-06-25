@@ -411,8 +411,8 @@ function LogPage() {
         console.error("inventory refresh failed", e);
       }
       const lowMeds: string[] = [];
-      if (nextInventory.medrone_stock <= nextInventory.low_stock_threshold) lowMeds.push("Medrone");
-      if (nextInventory.probiotic_stock <= nextInventory.low_stock_threshold) lowMeds.push("Probiotic");
+      if (nextInventory.medrone_stock <= nextInventory.medrone_threshold) lowMeds.push("Medrone");
+      if (nextInventory.probiotic_stock <= nextInventory.probiotic_threshold) lowMeds.push("Probiotic");
       const baseMessage = "Your daily entry has been recorded.";
       const description = lowMeds.length > 0
         ? `${baseMessage} ⚠️ Note: ${lowMeds.join(" & ")} stock is low!`
@@ -556,8 +556,8 @@ function LogPage() {
               <p className="font-semibold uppercase tracking-wider">Medication stock low</p>
               <p className="mt-0.5">
                 {[
-                  inventory.medrone_stock <= inventory.low_stock_threshold ? `Medrone ${formatTabletCount(inventory.medrone_stock)}` : null,
-                  inventory.probiotic_stock <= inventory.low_stock_threshold ? `Probiotic ${formatTabletCount(inventory.probiotic_stock)}` : null,
+                  inventory.medrone_stock <= inventory.medrone_threshold ? `Medrone ${formatTabletCount(inventory.medrone_stock)}` : null,
+                  inventory.probiotic_stock <= inventory.probiotic_threshold ? `Probiotic ${formatTabletCount(inventory.probiotic_stock)}` : null,
                 ].filter(Boolean).join(" · ")} tablets remaining.
               </p>
             </div>
