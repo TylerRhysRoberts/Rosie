@@ -5,12 +5,16 @@ export interface InventoryProfile {
   medrone_stock: number;
   probiotic_stock: number;
   low_stock_threshold: number;
+  medrone_threshold: number;
+  probiotic_threshold: number;
 }
 
 export const EMPTY_INVENTORY: InventoryProfile = {
   medrone_stock: 0,
   probiotic_stock: 0,
   low_stock_threshold: 7,
+  medrone_threshold: 7,
+  probiotic_threshold: 7,
 };
 
 export type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
@@ -23,23 +27,26 @@ export function getStockStatus(stock: number, threshold: number): StockStatus {
 
 export function isInventoryLow(inv: InventoryProfile): boolean {
   return (
-    inv.medrone_stock <= inv.low_stock_threshold ||
-    inv.probiotic_stock <= inv.low_stock_threshold
+    inv.medrone_stock <= inv.medrone_threshold ||
+    inv.probiotic_stock <= inv.probiotic_threshold
   );
 }
 
 export async function fetchInventory(userId: string): Promise<InventoryProfile> {
   const { data, error } = await supabase
     .from("dog_profile")
-    .select("medrone_stock, probiotic_stock, low_stock_threshold")
+    .select("medrone_stock, probiotic_stock, low_stock_threshold, medrone_threshold, probiotic_threshold")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
   if (!data) return { ...EMPTY_INVENTORY };
+  const fallback = Number((data as Record<string, unknown>).low_stock_threshold ?? 7);
   return {
     medrone_stock: Number(data.medrone_stock ?? 0),
     probiotic_stock: Number(data.probiotic_stock ?? 0),
-    low_stock_threshold: Number(data.low_stock_threshold ?? 7),
+    low_stock_threshold: fallback,
+    medrone_threshold: Number((data as Record<string, unknown>).medrone_threshold ?? fallback),
+    probiotic_threshold: Number((data as Record<string, unknown>).probiotic_threshold ?? fallback),
   };
 }
 
