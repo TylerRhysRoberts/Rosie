@@ -335,7 +335,7 @@ function LogPage() {
 
   const addWalk = () => {
     if (log.walks.length >= 3) return;
-    update("walks", [...log.walks, { hours: 0, minutes: 30 }]);
+    update("walks", [...log.walks, { hours: 0, minutes: 20 }]);
   };
   const setWalk = (i: number, partial: Partial<Walk>) => {
     const next = log.walks.slice();
