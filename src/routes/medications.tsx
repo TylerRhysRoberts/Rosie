@@ -200,7 +200,7 @@ function MedicationsPage() {
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
         {/* Header — matches other tabs (logo right) */}
-        <div className="flex items-start justify-between animate-fade-up-blur">
+        <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
               Dosage history
@@ -209,17 +209,15 @@ function MedicationsPage() {
               Medications
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {user && (
               <button
                 type="button"
                 onClick={() => setInventoryOpen(true)}
                 aria-label="Open medication inventory"
-                className={`relative h-10 w-10 rounded-full flex items-center justify-center border border-border bg-muted text-foreground active:scale-95 transition-transform ${
-                  isInventoryLow(inventory) ? "text-warning border-warning/40" : ""
-                }`}
+                className="relative h-12 w-12 rounded-full flex items-center justify-center bg-muted active:scale-95 transition-transform"
               >
-                <Package className="w-5 h-5" />
+                <Package className={`h-6 w-6 ${isInventoryLow(inventory) ? "text-warning" : "text-primary"}`} />
                 {isInventoryLow(inventory) && (
                   <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-warning border-2 border-background" />
                 )}
