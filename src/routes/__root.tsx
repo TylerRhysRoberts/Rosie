@@ -43,7 +43,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "manifest",
-        href: "/manifest.webmanifest",
+        href: "/manifest.json",
       },
     ],
     scripts: [],
@@ -70,24 +70,12 @@ function RootComponent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const clearLegacyOfflineCache = async () => {
-      const hadController = Boolean(navigator.serviceWorker?.controller);
-      const registrations = await navigator.serviceWorker?.getRegistrations() ?? [];
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-
-      if ("caches" in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-      }
-
-      const reloadKey = "rosie-offline-cache-cleared";
-      if (hadController && sessionStorage.getItem(reloadKey) !== "true") {
-        sessionStorage.setItem(reloadKey, "true");
-        window.location.reload();
-      }
-    };
-
-    clearLegacyOfflineCache().catch(() => {});
+    // Register PWA Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js")
+        .then((reg) => console.log("Service Worker registered successfully", reg))
+        .catch((err) => console.error("Service Worker registration failed", err));
+    }
   }, []);
 
   return (
