@@ -267,9 +267,11 @@ function HistoryPage() {
         stool={stool} setStool={setStool}
         symptoms={symptoms} setSymptoms={setSymptoms}
         scavenged={scavenged} setScavenged={setScavenged}
+        treats={treats} setTreats={setTreats}
         lagWindow={lagWindow} setLagWindow={setLagWindow}
         uniqueLocations={uniqueLocations}
         uniqueMedications={uniqueMedications}
+        uniqueTreats={uniqueTreats}
         onClear={clearAll}
       />
 
