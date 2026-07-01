@@ -149,7 +149,7 @@ function HistoryPage() {
 
   const activeFilterCount =
     health.size + context.size + (locationFilter ? 1 : 0) + (medFilter ? 1 : 0) +
-    stool.size + symptoms.size + scavenged.size + (lagWindow ? 1 : 0);
+    stool.size + symptoms.size + scavenged.size + treats.size + (lagWindow ? 1 : 0);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
