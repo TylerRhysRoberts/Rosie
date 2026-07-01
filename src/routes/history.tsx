@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
-  deleteLogByDate, DOSAGE_LABELS,
+  deleteLogByDate, DOSAGE_LABELS, DEFAULT_TREATS,
 } from "@/lib/daily-logs";
 import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun, StickyNote, SlidersHorizontal } from "lucide-react";
 import {
@@ -40,6 +40,7 @@ function HistoryPage() {
   const [stool, setStool] = useState<Set<string>>(new Set());
   const [symptoms, setSymptoms] = useState<Set<string>>(new Set());
   const [scavenged, setScavenged] = useState<Set<string>>(new Set());
+  const [treats, setTreats] = useState<Set<string>>(new Set());
   const [lagWindow, setLagWindow] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -61,6 +62,12 @@ function HistoryPage() {
     for (const l of logs)
       for (const [name, m] of Object.entries(l.medications))
         if (m.taken) s.add(name);
+    return Array.from(s).sort();
+  }, [logs]);
+
+  const uniqueTreats = useMemo(() => {
+    const s = new Set<string>(DEFAULT_TREATS);
+    for (const l of logs) for (const t of l.treats) if (t) s.add(t);
     return Array.from(s).sort();
   }, [logs]);
 
@@ -89,12 +96,13 @@ function HistoryPage() {
     if (stool.size > 0 && !(l.stool_consistency ?? []).some((s) => stool.has(s))) return false;
     if (symptoms.size > 0 && !(l.symptoms ?? []).some((s) => symptoms.has(s))) return false;
     if (scavenged.size > 0 && !(l.scavenged ?? []).some((s) => scavenged.has(s))) return false;
+    if (treats.size > 0 && !(l.treats ?? []).some((t) => treats.has(t))) return false;
     return true;
   };
 
   const anyFilterActive =
     health.size > 0 || context.size > 0 || locationFilter || medFilter ||
-    stool.size > 0 || symptoms.size > 0 || scavenged.size > 0;
+    stool.size > 0 || symptoms.size > 0 || scavenged.size > 0 || treats.size > 0;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -125,7 +133,7 @@ function HistoryPage() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logs, query, health, context, locationFilter, medFilter, stool, symptoms, scavenged, lagWindow]);
+  }, [logs, query, health, context, locationFilter, medFilter, stool, symptoms, scavenged, treats, lagWindow]);
 
   const clearAll = () => {
     setHealth(new Set());
@@ -135,12 +143,13 @@ function HistoryPage() {
     setStool(new Set());
     setSymptoms(new Set());
     setScavenged(new Set());
+    setTreats(new Set());
     setLagWindow(false);
   };
 
   const activeFilterCount =
     health.size + context.size + (locationFilter ? 1 : 0) + (medFilter ? 1 : 0) +
-    stool.size + symptoms.size + scavenged.size + (lagWindow ? 1 : 0);
+    stool.size + symptoms.size + scavenged.size + treats.size + (lagWindow ? 1 : 0);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -258,9 +267,11 @@ function HistoryPage() {
         stool={stool} setStool={setStool}
         symptoms={symptoms} setSymptoms={setSymptoms}
         scavenged={scavenged} setScavenged={setScavenged}
+        treats={treats} setTreats={setTreats}
         lagWindow={lagWindow} setLagWindow={setLagWindow}
         uniqueLocations={uniqueLocations}
         uniqueMedications={uniqueMedications}
+        uniqueTreats={uniqueTreats}
         onClear={clearAll}
       />
 
@@ -492,9 +503,11 @@ type FilterDrawerProps = {
   stool: Set<string>; setStool: (s: Set<string>) => void;
   symptoms: Set<string>; setSymptoms: (s: Set<string>) => void;
   scavenged: Set<string>; setScavenged: (s: Set<string>) => void;
+  treats: Set<string>; setTreats: (s: Set<string>) => void;
   lagWindow: boolean; setLagWindow: (b: boolean) => void;
   uniqueLocations: string[];
   uniqueMedications: string[];
+  uniqueTreats: string[];
   onClear: () => void;
 };
 
@@ -591,6 +604,14 @@ function FilterDrawer(p: FilterDrawerProps) {
             {SCAVENGED_OPTS.map((s) => (
               <PillToggle key={s} on={p.scavenged.has(s)} onClick={() => toggle(p.scavenged, s, p.setScavenged)}>
                 {s}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
+          <FilterGroup label="Treats">
+            {p.uniqueTreats.map((t) => (
+              <PillToggle key={t} on={p.treats.has(t)} onClick={() => toggle(p.treats, t, p.setTreats)}>
+                {t}
               </PillToggle>
             ))}
           </FilterGroup>
