@@ -501,9 +501,11 @@ type FilterDrawerProps = {
   stool: Set<string>; setStool: (s: Set<string>) => void;
   symptoms: Set<string>; setSymptoms: (s: Set<string>) => void;
   scavenged: Set<string>; setScavenged: (s: Set<string>) => void;
+  treats: Set<string>; setTreats: (s: Set<string>) => void;
   lagWindow: boolean; setLagWindow: (b: boolean) => void;
   uniqueLocations: string[];
   uniqueMedications: string[];
+  uniqueTreats: string[];
   onClear: () => void;
 };
 
