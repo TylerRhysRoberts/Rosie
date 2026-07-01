@@ -96,12 +96,13 @@ function HistoryPage() {
     if (stool.size > 0 && !(l.stool_consistency ?? []).some((s) => stool.has(s))) return false;
     if (symptoms.size > 0 && !(l.symptoms ?? []).some((s) => symptoms.has(s))) return false;
     if (scavenged.size > 0 && !(l.scavenged ?? []).some((s) => scavenged.has(s))) return false;
+    if (treats.size > 0 && !(l.treats ?? []).some((t) => treats.has(t))) return false;
     return true;
   };
 
   const anyFilterActive =
     health.size > 0 || context.size > 0 || locationFilter || medFilter ||
-    stool.size > 0 || symptoms.size > 0 || scavenged.size > 0;
+    stool.size > 0 || symptoms.size > 0 || scavenged.size > 0 || treats.size > 0;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
