@@ -40,6 +40,7 @@ function HistoryPage() {
   const [stool, setStool] = useState<Set<string>>(new Set());
   const [symptoms, setSymptoms] = useState<Set<string>>(new Set());
   const [scavenged, setScavenged] = useState<Set<string>>(new Set());
+  const [treats, setTreats] = useState<Set<string>>(new Set());
   const [lagWindow, setLagWindow] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
