@@ -143,6 +143,7 @@ function HistoryPage() {
     setStool(new Set());
     setSymptoms(new Set());
     setScavenged(new Set());
+    setTreats(new Set());
     setLagWindow(false);
   };
 
