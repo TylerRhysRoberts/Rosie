@@ -206,6 +206,7 @@ export type Database = {
         Args: { _milestone_id: string }
         Returns: boolean
       }
+      is_guest: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

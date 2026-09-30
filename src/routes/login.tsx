@@ -21,6 +21,24 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
+
+  const handleGuest = async () => {
+    setGuestLoading(true);
+    try {
+      const { startGuestSession } = await import("@/lib/guest.functions");
+      const tokens = await startGuestSession();
+      const supabase = await getSupabase();
+      const { error } = await supabase.auth.setSession(tokens);
+      if (error) throw error;
+      toast.success("Exploring as guest — sample data only, changes won't be saved");
+      navigate({ to: "/app", search: {} });
+    } catch (err: any) {
+      toast.error(err.message || "Guest sign-in failed");
+    } finally {
+      setGuestLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -153,6 +171,15 @@ function LoginPage() {
             {loading ? "Please wait..." : isSignUp ? "Sign up" : "Sign in"}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={handleGuest}
+          disabled={guestLoading}
+          className="w-full mt-3 rounded-xl border border-input bg-muted/50 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-all duration-200 active:scale-[0.98] disabled:opacity-40"
+        >
+          {guestLoading ? "Loading demo..." : "Explore as guest"}
+        </button>
 
         </div>
 
