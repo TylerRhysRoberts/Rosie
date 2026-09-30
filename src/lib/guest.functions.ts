@@ -81,7 +81,7 @@ export const startGuestSession = createServerFn({ method: "POST" }).handler(asyn
     .eq("user_id", userId);
   if (!count) {
     await supabaseAdmin.from("daily_logs").insert(buildDemoLogs(userId));
-    await supabaseAdmin.from("dog_profile").upsert(
+    await supabaseAdmin.from("dog_profile").insert(
       {
         user_id: userId,
         emergency_vet_phone: "01234 567890",
@@ -91,7 +91,6 @@ export const startGuestSession = createServerFn({ method: "POST" }).handler(asyn
         medrone_stock: 24,
         probiotic_stock: 6,
       },
-      { onConflict: "user_id" },
     );
     const weights = [0, 30, 60, 90].map((daysAgo, idx) => {
       const d = new Date();
