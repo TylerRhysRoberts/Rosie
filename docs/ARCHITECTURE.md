@@ -43,7 +43,7 @@ Almost all logic runs in the browser. The Worker serves the app and runs a singl
 **`daily_logs`** — one row per user per day (`UNIQUE (user_id, log_date)`). The core of the app.
 - `health_score` smallint 1–3 (Poor / Neutral / Good)
 - `flare_up` boolean, plus `flare_event` jsonb `{had_flareup, start_time, end_time, symptoms[], intervention_med}`
-- `stool_consistency` text[] (was text until May 2026; migrated in place). Stored values do not all match their labels: `loose` is shown as "Mucus", and `soft` as "Soft / Loose" (`lib/daily-logs.ts`). Analysis must use the labels, or the values need a careful rename.
+- `stool_consistency` text[] (was text until May 2026; migrated in place). Values: `formed` (No Issues), `soft`, `loose`, `liquid`, `blood`, `constipation`. Until October 2026 `loose` was mislabelled "Mucus" in the UI; the stored value was always meant as loose stool.
 - `symptoms` text[]
 - `medications` jsonb keyed by drug name: `{"Medrone": {"taken": true, "dosage": "half", "is_rescue": false}, …}`
 - `walks` jsonb array `[{hours, minutes, completed}]`
