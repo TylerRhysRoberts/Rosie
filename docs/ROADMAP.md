@@ -15,7 +15,7 @@ Ground rules for everything below:
 
 - **Full backup.** The CSV export in History only covers the last 180 days, flattens medications and flare data, and leaves out the profile, weights and achievements. Add an "Export everything (JSON)" button that dumps all four tables unaltered.
 - **Fix the hidden data windows.** History, Medications and the CSV export load only the last 180 days. Logging started on 26 May 2026, so from about **22 November 2026** the oldest entries silently disappear from those screens and from the export. Insights already only looks at the last 120 days, so the first month is already excluded from it.
-- **Stool value names (optional, changes data).** The labels are right ("Soft / Loose" for `soft`, "Mucus" for `loose`), but the stored value `loose` actually means mucus. Renaming it to `mucus` in the data and code would stop future analysis or MCP code misreading it. It is a one-line `UPDATE` plus a code change, done only with agreement and after the backup.
+- **Stool value names (optional, changes data).** The labels are right ("Soft / Loose" for `soft`, "Mucus" for `loose`), but the stored value `loose` actually means mucus. Renaming it to `mucus` in the data and code would stop future analysis or MCP code misreading it. It needs a migration on `daily_logs.stool_consistency` (`array_replace(stool_consistency, 'loose', 'mucus')`), plus the `StoolConsistency` type and `STOOL_OPTIONS` in `src/lib/daily-logs.ts` and the filter list in `src/routes/history.tsx`, all shipped together. Only with agreement and after the backup.
 - **Confirm whether guest mode works on the Cloudflare URL.** Google sign-in matters less, since you use email and password.
 
 ## Phase 1: tidy the codebase (low risk, no behaviour change)
