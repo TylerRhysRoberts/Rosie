@@ -16,7 +16,7 @@ Ground rules for everything below:
 - **Full backup.** The CSV export in History only covers the last 180 days, flattens medications and flare data, and leaves out the profile, weights and achievements. Add an "Export everything (JSON)" button that dumps all four tables unaltered.
 - **Fix the hidden data windows.** History, Medications and the CSV export load only the last 180 days. Logging started on 26 May 2026, so from about **22 November 2026** the oldest entries silently disappear from those screens and from the export. Insights already only looks at the last 120 days, so the first month is already excluded from it.
 - **Stool labels (fixed).** `loose` was shown as "Mucus" and `soft` as "Soft / Loose"; they now read "Loose" and "Soft". The app has no mucus option. Add one as a new value if it is worth tracking, rather than reusing `loose`.
-- **Confirm how deploys happen** (Workers Builds settings) and whether Google sign-in and guest mode work on the Cloudflare URL.
+- **Confirm whether Google sign-in and guest mode work on the Cloudflare URL.**
 
 ## Phase 1: tidy the codebase (low risk, no behaviour change)
 

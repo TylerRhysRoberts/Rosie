@@ -29,7 +29,7 @@ Almost all logic runs in the browser. The Worker serves the app and runs a singl
 
 ## Hosting and deployment
 
-- `wrangler.jsonc` names the Worker `tanstack-start-app`, but the live Worker in the Cloudflare account is `rosie` (created 27 June 2026, last deployed 30 September 2026, the same day as the last commit). So deployment is very likely Cloudflare Workers Builds connected to this repo with the name overridden, rather than a local `wrangler deploy`. *Unverified: check Workers & Pages → rosie → Settings → Builds.*
+- Deployment is Cloudflare Workers Builds, connected to this repo: every push is built, `main` is the production branch, and the Cloudflare bot comments on pull requests with the build status. `wrangler.jsonc` names the Worker `tanstack-start-app`, but the live Worker is `rosie`, so the name is overridden in the Cloudflare build settings.
 - There is no GitHub Actions workflow, no tests and no preview environment.
 - `public/sw.js` is a do-nothing service worker that exists only to satisfy PWA install criteria; there is no offline support. `vite-plugin-pwa` is installed but not used.
 - Lovable still hosts its own copy (preview and `*.lovable.app`), and Lovable commits straight to `main`.
