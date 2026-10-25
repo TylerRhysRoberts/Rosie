@@ -224,7 +224,7 @@ Health score: 3 Good, 2 Neutral (off-colour, mild symptoms), 1 Poor (flare-up or
         stool_consistency: z
           .array(z.enum(STOOL_VALUES as [StoolConsistency, ...StoolConsistency[]]))
           .optional()
-          .describe("Replaces the day's stool list. 'formed' = no issues, 'soft' = soft/loose, 'loose' = mucus, 'liquid' = diarrhoea."),
+          .describe("Replaces the day's stool list. 'formed' = no issues, 'loose' = not solid or perfectly formed, 'soft' = soft, 'liquid' = diarrhoea, 'blood' = blood present."),
         add_walks: z
           .array(z.object({ minutes: z.number().int().min(1).max(600) }))
           .optional()

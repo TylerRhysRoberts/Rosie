@@ -15,12 +15,12 @@ export const HEALTH_SCORES: Record<HealthScore, string> = {
   1: "Poor",
 };
 
-// Stored value -> label shown in the app. The stored values are historical, so
-// "loose" means mucus and "soft" covers soft or loose stools.
+// Stored value -> meaning. "loose" is any stool that isn't solid or perfectly formed
+// (Tyler's definition; the app's chip currently mislabels it "Mucus").
 export const STOOL_OPTIONS = {
   formed: "No Issues",
-  soft: "Soft / Loose",
-  loose: "Mucus",
+  soft: "Soft",
+  loose: "Loose (not solid or perfectly formed)",
   liquid: "Liquid / Diarrhoea",
   blood: "Blood",
   constipation: "Constipation",
