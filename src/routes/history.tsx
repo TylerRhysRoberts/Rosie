@@ -527,8 +527,8 @@ function FilterDrawer(p: FilterDrawerProps) {
   ];
   const STOOL_LABELS: { v: string; l: string }[] = [
     { v: "formed", l: "No Issues" },
-    { v: "soft", l: "Soft" },
-    { v: "loose", l: "Loose" },
+    { v: "soft", l: "Soft / Loose" },
+    { v: "loose", l: "Mucus" },
     { v: "liquid", l: "Liquid / Diarrhoea" },
     { v: "blood", l: "Blood" },
     { v: "constipation", l: "Constipation" },

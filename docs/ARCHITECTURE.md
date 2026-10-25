@@ -43,7 +43,7 @@ Almost all logic runs in the browser. The Worker serves the app and runs a singl
 **`daily_logs`** — one row per user per day (`UNIQUE (user_id, log_date)`). The core of the app.
 - `health_score` smallint 1–3 (Poor / Neutral / Good)
 - `flare_up` boolean, plus `flare_event` jsonb `{had_flareup, start_time, end_time, symptoms[], intervention_med}`
-- `stool_consistency` text[] (was text until May 2026; migrated in place). Values: `formed` (No Issues), `soft`, `loose`, `liquid`, `blood`, `constipation`. The UI has always labelled `loose` as "Mucus" (since the first commit), so existing `loose` rows were recorded by tapping "Mucus". Whether those rows mean mucus or loose stool needs Tyler's confirmation before any relabel or analysis.
+- `stool_consistency` text[] (was text until May 2026; migrated in place). Values: `formed` (No Issues), `soft`, `loose`, `liquid`, `blood`, `constipation`. Labels: `soft` is "Soft / Loose" and `loose` is "Mucus". The value name `loose` is misleading (it means mucus, confirmed by Tyler), so analysis must go by the label, not the value name.
 - `symptoms` text[]
 - `medications` jsonb keyed by drug name: `{"Medrone": {"taken": true, "dosage": "half", "is_rescue": false}, …}`
 - `walks` jsonb array `[{hours, minutes, completed}]`
@@ -73,7 +73,7 @@ Almost all logic runs in the browser. The Worker serves the app and runs a singl
 ## Authentication
 
 - Email and password through Supabase Auth, and sign-up is open to anyone who finds the URL. RLS keeps each account's data separate, so this is a privacy-of-the-app issue rather than a data leak.
-- Google sign-in goes through Lovable's OAuth broker (`src/integrations/lovable`), not Supabase directly. Whether this works on the Cloudflare domain depends on Lovable allowing that redirect. *Unverified.*
+- Google sign-in goes through Lovable's OAuth broker (`src/integrations/lovable`), not Supabase directly. Whether this works on the Cloudflare domain depends on Lovable allowing that redirect. *Unverified.* Tyler signs in with email and password, so Google sign-in is not essential.
 - Guest mode (`src/lib/guest.functions.ts`) is a server function that uses the service role key to create `guest@rosie-demo.app`, seed 95 days of fake data, and mint a session. It needs `SUPABASE_SERVICE_ROLE_KEY` on the Worker; since Lovable Cloud does not expose that key, guest mode may only work on Lovable's hosting. *Unverified.*
 - Every route checks auth itself with `useAuth()` in a `useEffect` and redirects to `/login`; there is no shared route guard.
 
