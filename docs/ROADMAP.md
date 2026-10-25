@@ -15,6 +15,7 @@ Ground rules for everything below:
 
 - **Full backup.** The CSV export in History only covers the last 180 days, flattens medications and flare data, and leaves out the profile, weights and achievements. Add an "Export everything (JSON)" button that dumps all four tables unaltered.
 - **Fix the hidden data windows.** History, Medications and the CSV export load only the last 180 days. Logging started on 26 May 2026, so from about **22 November 2026** the oldest entries silently disappear from those screens and from the export. Insights already only looks at the last 120 days, so the first month is already excluded from it.
+- **Confirm the stool labels.** The stored value `loose` is displayed as "Mucus" and `soft` as "Soft / Loose". Git history only goes back to 10 June, and "Mucus" was already the label then, so only entries from 26 May to 10 June could have been made under a different label. If any were, some historical `loose` rows mean loose stool and others mean mucus, and that needs sorting out before any stool analysis or rename.
 - **Confirm how deploys happen** (Workers Builds settings) and whether Google sign-in and guest mode work on the Cloudflare URL.
 
 ## Phase 1: tidy the codebase (low risk, no behaviour change)
