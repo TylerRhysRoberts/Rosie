@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rosie-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // nodejs_compat: the MCP handler uses AsyncLocalStorage.
+  // global_fetch_strictly_public: required when accepting Client ID Metadata Documents.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": { "enabled": true },
+  "vars": {
+    // Same project and publishable (public) key the app uses. No service-role key is needed:
+    // every query runs as the signed-in user, under the app's row-level security.
+    "SUPABASE_URL": "https://uzdwydyaqqkyrgpxutgf.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6ZHd5ZHlhcXFreXJncHh1dGdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NzY3ODMsImV4cCI6MjA5NTM1Mjc4M30.h8cGhMPTkP4pZFnhJHNdRzmTpEMqWeD9RxanHAsaccg",
+    // Optional. Set to the Worker's public origin (e.g. https://rosie-mcp.<you>.workers.dev)
+    // if it is ever served from more than one hostname. Empty = use the first one it is reached on.
+    "PUBLIC_URL": ""
+  },
+  // Secrets (set with `npx wrangler secret put <NAME>`, never committed):
+  //   ALLOWED_EMAILS  comma-separated emails allowed to connect, e.g. your Rosie login.
+  "kv_namespaces": [
+    // Stores OAuth clients, grants and hashed tokens. Create it with
+    // `npx wrangler kv namespace create OAUTH_KV` and paste the id here.
+    { "binding": "OAUTH_KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }
+  ]
+}
