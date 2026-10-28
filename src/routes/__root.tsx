@@ -13,7 +13,9 @@ export const Route = createRootRoute({
       { title: "Rosie Health Hub" },
       { name: "description", content: "Rosie's private daily health log — score, symptoms, medications, walks." },
       { name: "author", content: "Rosie Health Hub" },
-      { name: "theme-color", content: "#FDFBF7" },
+      // Match the page background so the iOS status bar and home-indicator strip blend in
+      { name: "theme-color", content: "#FDFBF7", media: "(prefers-color-scheme: light)" },
+      { name: "theme-color", content: "#13110F", media: "(prefers-color-scheme: dark)" },
       { property: "og:title", content: "Rosie Health Hub" },
       { name: "twitter:title", content: "Rosie Health Hub" },
       { property: "og:description", content: "Rosie's private daily health log — score, symptoms, medications, walks." },
